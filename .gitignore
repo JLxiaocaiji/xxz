@@ -1,0 +1,5 @@
+manifest.json
+.git/
+.hbuilderx/
+unpackage/
+node_modules/
