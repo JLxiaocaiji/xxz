@@ -11,7 +11,7 @@
     </button>
 
     <view>
-      <button class="avatar-wrapper" open-type="chooseAvatar" @tap="onChooseAvatar">
+      <button class="avatar-wrapper" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
         <image class="logo" :src="defaultAvatarUrl"></image>
       </button>
       <input type="nickname" class="weui-input" placeholder="请输入昵称" />
@@ -60,6 +60,8 @@ const getInfo = () => {
 
 const onChooseAvatar = (e) => {
   console.log(e)
+  const { avatarUrl } = e.detail;
+  defaultAvatarUrl.value = avatarUrl
 }
 // #endif
 </script>
