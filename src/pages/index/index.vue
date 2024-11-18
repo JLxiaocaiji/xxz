@@ -25,40 +25,34 @@
 import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 
-const defaultAvatarUrl = ref<string>(""
-)
+const defaultAvatarUrl = ref<string>("")
 // #ifdef MP-WEIXIN
 // 获取 code 登录凭证
 let code = ''
 const getInfo = () => {
   console.log(111)
-  // uni.login({
-  //   provider: 'weixin',
-  //   onlyAuthorize: true,
-  //   success: (logRes) => {
-  //     console.log(logRes)
+
+  // uni.getUserInfo({
+  //   lang: 'zh_CN',
+  //   desc: '获取用户信息',
+  //   success: (userInfo) => {
+  //     console.log(userInfo, 'userInfo')
+  //     xw.login({
+  //       provider: 'weixin',
+  //       success: (loginInfo) => {
+  //         console.log(loginInfo, 'loginInfo')
+  //       },
+  //     })
+  //   },
+  //   fail: (err) => {
+  //     console.log(err, 'err')
   //   },
   // })
-  console.log(222)
-  uni.getUserInfo({
-    lang: 'zh_CN',
-    desc: '获取用户信息',
-    success: (userInfo) => {
-      console.log(userInfo, 'userInfo')
-      // xw.login({
-      //   provider: 'weixin',
-      //   success: (loginInfo) => {
-      //     console.log(loginInfo, 'loginInfo')
-      //   },
-      // })
-    },
-    fail: (err) => {
-      console.log(err, 'err')
-    },
-  })
+
+  uni.navigateTo({ url: '/pages/test/test' })
 }
 
-const onChooseAvatar = (e) => {
+const onChooseAvatar = (e: Record<string, any>) => {
   console.log(e)
   const { avatarUrl } = e.detail;
   defaultAvatarUrl.value = avatarUrl
