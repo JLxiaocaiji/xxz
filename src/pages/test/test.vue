@@ -9,11 +9,12 @@
 
 <script lang="ts" setup>
 import * as THREE from 'three-platformize'
-import { onLoad, onReady } from '@dcloudio/uni-app'
+import { onLoad, onReady, NodesRef } from '@dcloudio/uni-app'
 import { getCurrentInstance, ref } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
-import type { AddressParams } from '@/types/window.d'
+import type { WindowInfo } from '@/types/window.d'
+import { show } from "./index"
 
 onReady(() => {
   uni
@@ -30,21 +31,17 @@ onReady(() => {
         context: true,
         node: true,
       },
-      (res) => {
+      (res: NodesRef) => {
         console.log(res)
+        console.log(res?.node)
         console.log(1111)
+        init(res?.node)
       },
     )
-    .exec((res) => {
-      console.log(2222)
-      console.log(res)
-      console.log(res[0].node)
-
-      init(res[0].node)
-    })
+    .exec()
 })
 
-const windowInfo = ref<AddressParams>({
+const windowInfo = ref<WindowInfo>({
   windowWidth: 0,
   windowHeight: 0,
 })
@@ -56,17 +53,15 @@ const getWindowInfo = () => {
   windowInfo.value.windowHeight = tempWindowInfo.windowHeight
 }
 
-const init = (node: any) => {
+const init = (node: NodesRef) => {
   console.log(3333)
   console.log(node)
   const platform = new WechatPlatform(node) // webgl canvasNode
   platform.enableDeviceOrientation('game')
   THREE.PLATFORM.set(platform)
 
-  show()
+  // show()
 }
-
-const show = () => {}
 </script>
 
 <style lang="scss" scoped></style>
