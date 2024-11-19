@@ -1,20 +1,25 @@
 <template>
-  <view
-    >111
-    <view id="app">
-      <canvas class="webgl" type="webgl" id="gl"></canvas>
-    </view>
+  <view id="app">
+    <canvas
+      class="webgl"
+      type="webgl"
+      id="gl"
+      @touchstart="touchStart"
+      style="width: 100vw; height: 100vh"
+      @touchmove="touchMove"
+      @touchend="touchEnd"
+    ></canvas>
   </view>
 </template>
 
 <script lang="ts" setup>
 import * as THREE from 'three-platformize'
 import { onLoad, onReady, NodesRef } from '@dcloudio/uni-app'
-import { getCurrentInstance, ref } from 'vue'
+import { getCurrentInstance, ref, nextTick } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
 import type { WindowInfo } from '@/types/window.d'
-import { show } from "./index"
+import { show } from './index'
 
 onReady(() => {
   uni
@@ -33,8 +38,6 @@ onReady(() => {
       },
       (res: NodesRef) => {
         console.log(res)
-        console.log(res?.node)
-        console.log(1111)
         init(res?.node)
       },
     )
@@ -47,20 +50,34 @@ const windowInfo = ref<WindowInfo>({
 })
 
 // 获取屏幕信息
-const getWindowInfo = () => {
+const getWindowInfo = (canvas: HTMLCanvasElement) => {
   let tempWindowInfo = uni.getSystemInfoSync()
-  windowInfo.value.windowWidth = tempWindowInfo.windowWidth
-  windowInfo.value.windowHeight = tempWindowInfo.windowHeight
+  console.log(tempWindowInfo)
+  windowInfo.value.windowWidth = tempWindowInfo.windowWidth // 402
+  windowInfo.value.windowHeight = tempWindowInfo.windowHeight // 728
+
+  nextTick(() => {
+    show({ ...tempWindowInfo, canvas: canvas })
+  })
 }
 
-const init = (node: NodesRef) => {
-  console.log(3333)
-  console.log(node)
-  const platform = new WechatPlatform(node) // webgl canvasNode
+const init = (canvas: HTMLCanvasElement) => {
+  const platform = new WechatPlatform(canvas) // webgl canvasNode
   platform.enableDeviceOrientation('game')
   THREE.PLATFORM.set(platform)
 
-  // show()
+  getWindowInfo(canvas)
+}
+
+const touchStart = (e) => {
+  console.log(e)
+}
+const touchMove = (e) => {
+  console.log(e)
+  // this.platform.dispatchTouchEvent(e);
+}
+const touchEnd = (e) => {
+  console.log(e)
 }
 </script>
 

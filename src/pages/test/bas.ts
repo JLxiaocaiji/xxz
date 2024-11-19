@@ -1,3 +1,5 @@
+import * as THREE from 'three-platformize'
+
 const BAS: any = {}
 
 BAS.ShaderChunk = {}
@@ -514,8 +516,8 @@ BAS.ModelBufferGeometry = function (model: THREE.BufferGeometry) {
   this.faceCount = model.index ? model.index.count / 3 : 0
   this.vertexCount = model.attributes.position.count
 
-  this.bufferIndices()
-  this.bufferPositions()
+  // this.bufferIndices()
+  // this.bufferPositions()
 }
 BAS.ModelBufferGeometry.prototype = Object.create(THREE.BufferGeometry.prototype)
 BAS.ModelBufferGeometry.prototype.constructor = BAS.ModelBufferGeometry
@@ -584,7 +586,11 @@ BAS.ModelBufferGeometry.prototype.createAttribute = function (
   const buffer = new Float32Array(this.vertexCount * itemSize)
   const attribute = new THREE.BufferAttribute(buffer, itemSize)
 
-  this.addAttribute(name, attribute)
+  console.log(1111)
+  console.log(name)
+  console.log(attribute)
+  // this.addAttribute(name, attribute) // 之前的 three 是这个
+  this.setAttribute(name, attribute)  // 为当前几何体设置一个 attribute 属性
 
   return attribute
 }
@@ -676,6 +682,7 @@ BAS.PrefabBufferGeometry.prototype.computeVertexNormals = function () {
 
   if (attributes.normal === undefined) {
     this.addAttribute('normal', new THREE.BufferAttribute(new Float32Array(positions.length), 3))
+    // this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(positions.length), 3))
   }
 
   const normals = attributes.normal.array
@@ -734,7 +741,8 @@ BAS.PrefabBufferGeometry.prototype.createAttribute = function (
   const buffer = new Float32Array(this.prefabCount * this.prefabVertexCount * itemSize)
   const attribute = new THREE.BufferAttribute(buffer, itemSize)
 
-  this.addAttribute(name, attribute)
+  // this.addAttribute(name, attribute)
+  this.setAttribute(name, attribute)
 
   if (factory) {
     for (let i = 0, offset = 0; i < this.prefabCount; i++) {
@@ -841,6 +849,9 @@ BAS.BaseAnimationMaterial.prototype._concatTransformPosition = function () {
 }
 
 BAS.BaseAnimationMaterial.prototype.setUniformValues = function (values: Record<string, any>) {
+
+  console.log(3333)
+  console.log(values)
   for (const key in values) {
     if (key in this.uniforms) {
       const uniform = this.uniforms[key]
@@ -877,6 +888,10 @@ BAS.BasicAnimationMaterial = function (
   this.lights = false
   this.vertexShader = this._concatVertexShader()
   this.fragmentShader = basicShader.fragmentShader
+
+  console.log(2222)
+  console.log(this.defines)
+  console.log(uniformValues)
 
   // todo add missing default defines
   uniformValues.map && (this.defines['USE_MAP'] = '')
@@ -940,7 +955,10 @@ BAS.BasicAnimationMaterial.prototype._concatVertexShader = function () {
   ].join('\n')
 }
 
-BAS.PhongAnimationMaterial = function (parameters: THREE.MeshPhongMaterialParameters,, uniformValues) {
+BAS.PhongAnimationMaterial = function (
+  parameters: THREE.MeshPhongMaterialParameters,
+  uniformValues: { [key: string]: any },
+) {
   BAS.BaseAnimationMaterial.call(this, parameters)
 
   const phongShader = THREE.ShaderLib['phong']
@@ -1030,3 +1048,5 @@ BAS.PhongAnimationMaterial.prototype._concatVertexShader = function () {
     '}',
   ].join('\n')
 }
+
+export default BAS

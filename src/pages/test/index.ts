@@ -1,18 +1,19 @@
 import * as THREE from 'three-platformize'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
-import { TweenMax, TweenLite, Tween, Power0, TimelineMax, GSAPTween } from 'gsap'
-import BAS from './bas.js'
+import { TweenMax, TweenLite, Tween, Power0, TimelineMax, GSAPTween, gsap } from 'gsap'
+import BAS from './bas'
 
 // export const init = () => {
-export const show = () => {
+export const show = (deviceInfo: Record<string, any>) => {
   const root = new THREERoot({
     createCameraControls: !true,
-    antialias: window.devicePixelRatio === 1,
+    antialias: deviceInfo.devicePixelRatio === 1,
     fov: 80,
+    deviceInfo: deviceInfo,
   })
 
   root.renderer.setClearColor(0x000000, 0)
-  root.renderer.setPixelRatio(window.devicePixelRatio || 1)
+  root.renderer.setPixelRatio(deviceInfo.devicePixelRatio || 1)
   root.camera.position.set(0, 0, 60)
 
   const width = 100
@@ -21,7 +22,7 @@ export const show = () => {
   const slide = new Slide(width, height, 'out')
   const l1 = new THREE.ImageLoader()
   l1.setCrossOrigin('Anonymous')
-  l1.load('../images/winter.jpg', function (img) {
+  l1.load('./winter.jpg', function (img) {
     slide.setImage(img)
   })
   root.scene.add(slide)
@@ -29,7 +30,7 @@ export const show = () => {
   const slide2 = new Slide(width, height, 'in')
   const l2 = new THREE.ImageLoader()
   l2.setCrossOrigin('Anonymous')
-  l2.load('../images/spring.png', function (img) {
+  l2.load('./spring.png', function (img) {
     slide2.setImage(img)
   })
 
@@ -42,11 +43,11 @@ export const show = () => {
 
   createTweenScrubber(tl)
 
-  window.addEventListener('keyup', function (e) {
-    if (e.keyCode === 80) {
-      tl.paused(!tl.paused())
-    }
-  })
+  // window.addEventListener('keyup', function (e) {
+  //   if (e.keyCode === 80) {
+  //     tl.paused(!tl.paused())
+  //   }
+  // })
 }
 
 ////////////////////
@@ -59,9 +60,11 @@ class Slide extends THREE.Mesh {
   constructor(width: number, height: number, animationPhase: 'in' | 'out') {
     const plane = new THREE.PlaneGeometry(width, height, width * 2, height * 2)
     const geometry = new SlideGeometry(plane)
+
+    console.log(44444)
     const material = new BAS.BasicAnimationMaterial(
       {
-        shading: THREE.FlatShading,
+        flatShading: THREE.FlatShading,
         side: THREE.DoubleSide,
         uniforms: {
           uTime: { type: 'f', value: 0 },
@@ -95,9 +98,11 @@ class Slide extends THREE.Mesh {
       },
     )
 
+    console.log(55555)
+    console.log(material)
+
     // Assume BAS.Utils.separateFaces exists as it was used in original code
     BAS.Utils.separateFaces(plane)
-
     geometry.bufferUVs()
 
     const aAnimation = geometry.createAttribute('aAnimation', 2)
@@ -113,8 +118,6 @@ class Slide extends THREE.Mesh {
     const maxDelayX = 0.9
     const maxDelayY = 0.125
     const stretch = 0.11
-
-    
 
     const startPosition = new THREE.Vector3()
     const control0 = new THREE.Vector3()
@@ -203,7 +206,6 @@ class Slide extends THREE.Mesh {
         aEndPositionArray[i3 + v + 2] = endPosition.z
       }
     }
-
     super(geometry, material)
     this.totalDuration = maxDuration + maxDelayX + maxDelayY + stretch
     this.frustumCulled = false
@@ -223,7 +225,7 @@ class Slide extends THREE.Mesh {
   }
 
   transition(): GSAPTween {
-    return TweenMax.fromTo(
+    return gsap.fromTo(
       this,
       3.0,
       { time: 0.0 },
@@ -243,7 +245,7 @@ class SlideGeometry extends BAS.ModelBufferGeometry {
     this.modelGeometry = model
     this.faceCount = this.modelGeometry.index ? this.modelGeometry.index.count / 3 : 0
     this.vertexCount = this.modelGeometry.attributes.position.count
-    this.bufferPositions()
+    // this.bufferPositions()
   }
 
   // 填充顶点位置数据
@@ -304,6 +306,7 @@ interface THREERootParams {
   zFar?: number
   createCameraControls?: boolean
   antialias?: boolean
+  deviceInfo: Record<string, any>
 }
 
 class THREERoot {
@@ -311,6 +314,7 @@ class THREERoot {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   controls?: OrbitControls
+  deviceInfo: Record<string, any>
 
   constructor(params: THREERootParams) {
     params = utils.extend(
@@ -323,24 +327,29 @@ class THREERoot {
       params,
     )
 
+    this.deviceInfo = params.deviceInfo
+
     this.renderer = new THREE.WebGLRenderer({
       antialias: params.antialias,
       alpha: true,
     })
 
-    this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1))
+    this.renderer.setPixelRatio(Math.min(2, params.deviceInfo.devicePixelRatio || 1))
+
+    // .appendChild(this.renderer.domElement);
 
     this.camera = new THREE.PerspectiveCamera(
       params.fov,
-      window.innerWidth / window.innerHeight,
+      params.deviceInfo.windowWidth / params.deviceInfo.windowHeight,
       params.zNear,
       params.zFar,
     )
 
     this.scene = new THREE.Scene()
 
+    // 默认 false
     if (params.createCameraControls) {
-      this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+      this.controls = new OrbitControls(this.camera, params.deviceInfo.canvas)
     }
 
     this.resize = this.resize.bind(this)
@@ -348,14 +357,13 @@ class THREERoot {
 
     this.resize()
     this.tick()
-
-    window.addEventListener('resize', this.resize, false)
+    // window.addEventListener('resize', this.resize, false)
   }
 
   tick(): void {
     this.update()
     this.render()
-    requestAnimationFrame(this.tick)
+    THREE.$requestAnimationFrame(this.tick)
   }
 
   update(): void {
@@ -367,9 +375,9 @@ class THREERoot {
   }
 
   resize(): void {
-    this.camera.aspect = window.innerWidth / window.innerHeight
+    this.camera.aspect = this.deviceInfo.windowWidth / this.deviceInfo.windowHeight
     this.camera.updateProjectionMatrix()
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
+    this.renderer.setSize(this.deviceInfo.windowWidth, this.deviceInfo.windowHeight)
   }
 }
 
