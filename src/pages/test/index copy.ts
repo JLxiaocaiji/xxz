@@ -20,7 +20,6 @@ export const show = (deviceInfo: Record<string, any>) => {
   const width = 100
   const height = 60
 
-  // 原本基于THREE.Mesh的自定义幻灯片类
   const slide = new Slide(width, height, 'out')
   const l1 = new THREE.ImageLoader()
   l1.setCrossOrigin('Anonymous')
@@ -61,7 +60,7 @@ class Slide extends THREE.Mesh {
 
   constructor(width: number, height: number, animationPhase: 'in' | 'out') {
     const plane = new THREE.PlaneGeometry(width, height, width * 2, height * 2)
-
+    // Assume BAS.Utils.separateFaces exists as it was used in original code
     BAS.Utils.separateFaces(plane)
     const geometry = new SlideGeometry(plane) // 一开始这里为 null
 
@@ -104,11 +103,32 @@ class Slide extends THREE.Mesh {
       },
     )
 
-    const aAnimation = geometry.createAttribute('aAnimation', 2)
-    const aStartPosition = geometry.createAttribute('aStartPosition', 3)
-    const aControl0 = geometry.createAttribute('aControl0', 3)
-    const aControl1 = geometry.createAttribute('aControl1', 3)
-    const aEndPosition = geometry.createAttribute('aEndPosition', 3)
+    // const aAnimation = geometry.createAttribute('aAnimation', 2)
+    // const aStartPosition = geometry.createAttribute('aStartPosition', 3)
+    // const aControl0 = geometry.createAttribute('aControl0', 3)
+    // const aControl1 = geometry.createAttribute('aControl1', 3)
+    // const aEndPosition = geometry.createAttribute('aEndPosition', 3)
+
+    const aAnimation = new THREE.BufferAttribute(
+      new Float32Array(geometry.getAttribute('position').count * 2),
+      2,
+    )
+    const aStartPosition = new THREE.BufferAttribute(
+      new Float32Array(geometry.getAttribute('position').count * 3),
+      3,
+    )
+    const aControl0 = new THREE.BufferAttribute(
+      new Float32Array(geometry.getAttribute('position').count * 3),
+      3,
+    )
+    const aControl1 = new THREE.BufferAttribute(
+      new Float32Array(geometry.getAttribute('position').count * 3),
+      3,
+    )
+    const aEndPosition = new THREE.BufferAttribute(
+      new Float32Array(geometry.getAttribute('position').count * 3),
+      3,
+    )
 
     let i: number, i2: number, i3: number, i4: number, v: number
 
@@ -238,7 +258,6 @@ class SlideGeometry extends ModelBufferGeometry {
   modelGeometry: THREE.BufferGeometry
   faceCount: number
   vertexCount: number
-  faceIndexArray: Uint32Array
 
   constructor(model: THREE.BufferGeometry) {
     super(model)
@@ -246,18 +265,15 @@ class SlideGeometry extends ModelBufferGeometry {
     this.modelGeometry = model
     this.faceCount = this.modelGeometry.index ? this.modelGeometry.index.count / 3 : 0
     this.vertexCount = this.modelGeometry.attributes.position.count
-    this.faceIndexArray = this.modelGeometry?.index.array as Uint32Array
-
     // this.bufferPositions()
 
     console.log(1111)
     console.log(this.modelGeometry)
     console.log(this.faceCount)
     console.log(this.vertexCount)
-    console.log(this.faceIndexArray)
   }
 
-  // 填充顶点位置数据, 计算重心
+  // 填充顶点位置数据
   bufferPositions(): void {
     // 使用类型断言，假定 'position' 属性的数组是 Float32Array 类型
     const positionBuffer = this.createAttribute('position', 3).array as Float32Array
@@ -289,12 +305,9 @@ class SlideGeometry extends ModelBufferGeometry {
         positionAttribute.getZ(c),
       )
 
+      // 计算重心
       const centroid = new THREE.Vector3()
-      // 将 x, y, z 对应向量相加
-      centroid.add(vertexA).add(vertexB).add(vertexC)
-      centroid.x = centroid.x / 3
-      centroid.y = centroid.y / 3
-      centroid.z = centroid.z / 3
+      centroid.add(vertexA).add(vertexB).add(vertexC).divideScalar(3)
 
       // 将顶点相对于重心进行偏移
       positionBuffer[a * 3] = vertexA.x - centroid.x

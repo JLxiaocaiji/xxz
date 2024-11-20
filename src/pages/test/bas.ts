@@ -479,6 +479,7 @@ BAS.Utils = {
     }
   },
 
+  // 计算给定几何图形 geometry中某个面的质心
   computeCentroid: (function () {
     return function (geometry: THREE.BufferGeometry, face: number[]) {
       const v = new THREE.Vector3()
@@ -509,90 +510,86 @@ BAS.Utils = {
     }
   })(),
 }
-BAS.ModelBufferGeometry = function (model: THREE.BufferGeometry) {
-  THREE.BufferGeometry.call(this)
 
-  this.modelGeometry = model
-  this.faceCount = model.index ? model.index.count / 3 : 0
-  this.vertexCount = model.attributes.position.count
+export class ModelBufferGeometry extends THREE.BufferGeometry {
+  modelGeometry: THREE.BufferGeometry
+  faceCount: number
+  vertexCount: number
 
-  // this.bufferIndices()
-  // this.bufferPositions()
-}
-BAS.ModelBufferGeometry.prototype = Object.create(THREE.BufferGeometry.prototype)
-BAS.ModelBufferGeometry.prototype.constructor = BAS.ModelBufferGeometry
+  constructor(model: THREE.BufferGeometry) {
+    super()
+    this.modelGeometry = model
+    this.faceCount = model.index ? model.index.count / 3 : 0
+    this.vertexCount = model.getAttribute('position') ? model.getAttribute('position').count : 0
 
-BAS.ModelBufferGeometry.prototype.bufferIndices = function () {
-  const indexBuffer = new Uint32Array(this.faceCount * 3)
+    this.bufferIndices()
+    this.bufferPositions()
+  }
 
-  this.setIndex(new THREE.BufferAttribute(indexBuffer, 1))
-
-  let offset = 0
-
-  // 从 modelGeometry 获取面数据
-  if (this.modelGeometry.index) {
-    const indices = this.modelGeometry.index.array
-    for (let i = 0; i < this.faceCount; i++, offset += 3) {
-      // 通过索引获取面顶点
-      indexBuffer[offset] = indices[i * 3]
-      indexBuffer[offset + 1] = indices[i * 3 + 1]
-      indexBuffer[offset + 2] = indices[i * 3 + 2]
+  // 缓冲索引数据
+  bufferIndices(): void {
+    if (this.modelGeometry.index) {
+      const indexBuffer = this.modelGeometry.index.array
+      this.setIndex(new THREE.BufferAttribute(indexBuffer, 1))
     }
   }
-}
 
-BAS.ModelBufferGeometry.prototype.bufferPositions = function () {
-  // 获取 modelGeometry 的顶点位置数据
-  const positionBuffer = new Float32Array(this.vertexCount * 3)
-  this.setAttribute('position', new THREE.BufferAttribute(positionBuffer, 3))
+  // 缓冲位置数据
+  bufferPositions(): void {
+    const positionAttribute = this.modelGeometry.getAttribute('position')
+    if (!positionAttribute) return
 
-  let offset = 0
-  // 从 modelGeometry 获取顶点数据
-  const positions = this.modelGeometry.attributes.position.array
-  for (let i = 0; i < this.vertexCount; i++, offset += 3) {
-    positionBuffer[offset] = positions[i * 3]
-    positionBuffer[offset + 1] = positions[i * 3 + 1]
-    positionBuffer[offset + 2] = positions[i * 3 + 2]
+    const positionBuffer = this.createAttribute('position', 3)
+    const positions = positionBuffer.array
+    const positionArray = positionAttribute.array
+
+    // 复制 position 数组到当前几何体
+    for (let i = 0, offset = 0; i < this.vertexCount; i++, offset += 3) {
+      positions[offset] = positionArray[i * 3]
+      positions[offset + 1] = positionArray[i * 3 + 1]
+      positions[offset + 2] = positionArray[i * 3 + 2]
+    }
+
+    this.setAttribute('position', positionBuffer)
   }
-}
 
-BAS.ModelBufferGeometry.prototype.bufferUVs = function () {
-  const uvBuffer = this.createAttribute('uv', 2).array
-  const faceVertexUvs = this.modelGeometry.attributes.uv
-    ? this.modelGeometry.attributes.uv.array
-    : []
+  // 缓冲 UV 数据
+  bufferUVs(): void {
+    const uvAttribute = this.modelGeometry.getAttribute('uv')
+    if (!uvAttribute) return
 
-  for (let i = 0; i < this.faceCount; i++) {
-    const faceIndex = i * 3
-    const uv1 = new THREE.Vector2(uvBuffer[faceIndex * 2], uvBuffer[faceIndex * 2 + 1])
-    const uv2 = new THREE.Vector2(uvBuffer[faceIndex * 2 + 2], uvBuffer[faceIndex * 2 + 3])
-    const uv3 = new THREE.Vector2(uvBuffer[faceIndex * 2 + 4], uvBuffer[faceIndex * 2 + 5])
+    const uvBuffer = this.createAttribute('uv', 2)
+    const uvs = uvBuffer.array
+    const uvArray = uvAttribute.array
 
-    uvBuffer[faceIndex] = uv1.x
-    uvBuffer[faceIndex + 1] = uv1.y
+    // 根据索引将 UV 数据拷贝到新 BufferAttribute 中
+    for (let i = 0; i < this.faceCount; i++) {
+      const idxA = this.modelGeometry.index.array[i * 3]
+      const idxB = this.modelGeometry.index.array[i * 3 + 1]
+      const idxC = this.modelGeometry.index.array[i * 3 + 2]
 
-    uvBuffer[faceIndex + 2] = uv2.x
-    uvBuffer[faceIndex + 3] = uv2.y
+      // 设置每个顶点的 UV 数据
+      uvs[idxA * 2] = uvArray[i * 6]
+      uvs[idxA * 2 + 1] = uvArray[i * 6 + 1]
 
-    uvBuffer[faceIndex + 4] = uv3.x
-    uvBuffer[faceIndex + 5] = uv3.y
+      uvs[idxB * 2] = uvArray[i * 6 + 2]
+      uvs[idxB * 2 + 1] = uvArray[i * 6 + 3]
+
+      uvs[idxC * 2] = uvArray[i * 6 + 4]
+      uvs[idxC * 2 + 1] = uvArray[i * 6 + 5]
+    }
+
+    this.setAttribute('uv', uvBuffer)
   }
-}
 
-BAS.ModelBufferGeometry.prototype.createAttribute = function (
-  name: string,
-  itemSize: number,
-): THREE.BufferAttribute {
-  const buffer = new Float32Array(this.vertexCount * itemSize)
-  const attribute = new THREE.BufferAttribute(buffer, itemSize)
+  // 创建 BufferAttribute
+  createAttribute(name: string, itemSize: number): THREE.BufferAttribute {
+    const buffer = new Float32Array(this.vertexCount * itemSize)
+    const attribute = new THREE.BufferAttribute(buffer, itemSize)
 
-  console.log(1111)
-  console.log(name)
-  console.log(attribute)
-  // this.addAttribute(name, attribute) // 之前的 three 是这个
-  this.setAttribute(name, attribute)  // 为当前几何体设置一个 attribute 属性
-
-  return attribute
+    this.setAttribute(name, attribute)
+    return attribute
+  }
 }
 
 BAS.PrefabBufferGeometry = function (prefab: THREE.BufferGeometry, count: number) {
@@ -630,7 +627,10 @@ BAS.PrefabBufferGeometry.prototype.bufferIndices = function () {
 }
 
 BAS.PrefabBufferGeometry.prototype.bufferPositions = function () {
-  const positionBuffer = this.createAttribute('position', 3).array
+  const positionBuffer = this.createAttribute('position', 3).array as Float32Array
+
+  console.log(5555)
+  console.log(this.prefabGeometry)
   const positions = this.prefabGeometry.attributes.position.array
 
   for (let i = 0, offset = 0; i < this.prefabCount; i++) {
@@ -849,9 +849,6 @@ BAS.BaseAnimationMaterial.prototype._concatTransformPosition = function () {
 }
 
 BAS.BaseAnimationMaterial.prototype.setUniformValues = function (values: Record<string, any>) {
-
-  console.log(3333)
-  console.log(values)
   for (const key in values) {
     if (key in this.uniforms) {
       const uniform = this.uniforms[key]
@@ -889,14 +886,19 @@ BAS.BasicAnimationMaterial = function (
   this.vertexShader = this._concatVertexShader()
   this.fragmentShader = basicShader.fragmentShader
 
-  console.log(2222)
-  console.log(this.defines)
-  console.log(uniformValues)
-
   // todo add missing default defines
-  uniformValues.map && (this.defines['USE_MAP'] = '')
-  uniformValues.normalMap && (this.defines['USE_NORMALMAP'] = '')
+  // uniformValues.map && (this.defines['USE_MAP'] = '')
+  // uniformValues.normalMap && (this.defines['USE_NORMALMAP'] = '')
 
+  if (!this.defines) {
+    this.defines = {}
+  }
+  if (uniformValues.map) {
+    this.defines['USE_MAP'] = ''
+  }
+  if (uniformValues.normalMap) {
+    this.defines['USE_NORMALMAP'] = ''
+  }
   this.setUniformValues(uniformValues)
 }
 BAS.BasicAnimationMaterial.prototype = Object.create(BAS.BaseAnimationMaterial.prototype)

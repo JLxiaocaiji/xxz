@@ -14,7 +14,8 @@
 
 <script lang="ts" setup>
 import * as THREE from 'three-platformize'
-import { onLoad, onReady, NodesRef } from '@dcloudio/uni-app'
+import { onLoad, onReady} from '@dcloudio/uni-app'
+import type { NodesRef } from '@dcloudio/uni-types';
 import { getCurrentInstance, ref, nextTick } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
