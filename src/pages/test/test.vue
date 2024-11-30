@@ -14,11 +14,10 @@
 
 <script lang="ts" setup>
 import * as THREE from 'three-platformize'
-import { onLoad, onReady} from '@dcloudio/uni-app'
-import type { NodesRef } from '@dcloudio/uni-types';
+import { onLoad, onReady } from '@dcloudio/uni-app'
+import type { NodesRef } from '@dcloudio/uni-types'
 import { getCurrentInstance, ref, nextTick } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
-import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
 import type { WindowInfo } from '@/types/window.d'
 import { show } from './index'
 
@@ -50,6 +49,14 @@ const windowInfo = ref<WindowInfo>({
   windowHeight: 0,
 })
 
+const init = (canvas: HTMLCanvasElement) => {
+  const platform = new WechatPlatform(canvas) // webgl canvasNode
+  platform.enableDeviceOrientation('game')
+  THREE.PLATFORM.set(platform)
+
+  getWindowInfo(canvas)
+}
+
 // 获取屏幕信息
 const getWindowInfo = (canvas: HTMLCanvasElement) => {
   let tempWindowInfo = uni.getSystemInfoSync()
@@ -62,23 +69,15 @@ const getWindowInfo = (canvas: HTMLCanvasElement) => {
   })
 }
 
-const init = (canvas: HTMLCanvasElement) => {
-  const platform = new WechatPlatform(canvas) // webgl canvasNode
-  platform.enableDeviceOrientation('game')
-  THREE.PLATFORM.set(platform)
-
-  getWindowInfo(canvas)
-}
-
 const touchStart = (e) => {
-  console.log(e)
+  // console.log(e)
 }
 const touchMove = (e) => {
-  console.log(e)
+  // console.log(e)
   // this.platform.dispatchTouchEvent(e);
 }
 const touchEnd = (e) => {
-  console.log(e)
+  // console.log(e)
 }
 </script>
 

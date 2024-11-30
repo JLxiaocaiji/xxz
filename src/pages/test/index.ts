@@ -1,315 +1,23 @@
 import * as THREE from 'three-platformize'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
 import { Power0, gsap } from 'gsap'
-import BAS from './bas'
-import { ModelBufferGeometry } from './bas'
+import { _concatVertexShader, computeCentroid, fragmentShader } from './bas'
+import { $cancelAnimationFrame, $requestAnimationFrame, $window, AmbientLight, DirectionalLight, PerspectiveCamera, PLATFORM, Scene, sRGBEncoding, WebGL1Renderer } from 'three-platformize'
 
-// export const init = () => {
-export const show = (deviceInfo: Record<string, any>) => {
-  const root = new THREERoot({
-    createCameraControls: !true,
-    antialias: deviceInfo.devicePixelRatio === 1,
-    fov: 80,
-    deviceInfo: deviceInfo,
-  })
-
-  root.renderer.setClearColor(0x000000, 0)
-  root.renderer.setPixelRatio(deviceInfo.devicePixelRatio || 1)
-  root.camera.position.set(0, 0, 60)
-
-  const width = 100
-  const height = 60
-
-  // 原本基于THREE.Mesh的自定义幻灯片类
-  const slide = new Slide(width, height, 'out')
-  const l1 = new THREE.ImageLoader()
-  l1.setCrossOrigin('Anonymous')
-  l1.load('../../static/images/winter.jpg', function (img) {
-    slide.setImage(img)
-  })
-  root.scene.add(slide)
-
-  const slide2 = new Slide(width, height, 'in')
-  const l2 = new THREE.ImageLoader()
-  l2.setCrossOrigin('Anonymous')
-  l2.load('../../static/images/spring.png', function (img) {
-    slide2.setImage(img)
-  })
-
-  root.scene.add(slide2)
-
-  const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.0, yoyo: true })
-
-  tl.add(slide.transition(), 0)
-  tl.add(slide2.transition(), 0)
-
-  createTweenScrubber(tl)
-
-  // window.addEventListener('keyup', function (e) {
-  //   if (e.keyCode === 80) {
-  //     tl.paused(!tl.paused())
-  //   }
-  // })
-}
-
-////////////////////
-// CLASSES
-////////////////////
-
-class Slide extends THREE.Mesh {
-  totalDuration: number
-
-  constructor(width: number, height: number, animationPhase: 'in' | 'out') {
-    const plane = new THREE.PlaneGeometry(width, height, width * 2, height * 2)
-
-    BAS.Utils.separateFaces(plane)
-    const geometry = new SlideGeometry(plane) // 一开始这里为 null
-
-    geometry.bufferUVs()
-
-    // 创建一个自定义材质，用于实现动画效果
-    const material = new BAS.BasicAnimationMaterial(
-      {
-        flatShading: THREE.FlatShading,
-        side: THREE.DoubleSide,
-        uniforms: {
-          uTime: { type: 'f', value: 0 },
-        },
-        shaderFunctions: [
-          BAS.ShaderChunk['cubic_bezier'],
-          BAS.ShaderChunk['ease_in_out_cubic'],
-          BAS.ShaderChunk['quaternion_rotation'],
-        ],
-        shaderParameters: [
-          'uniform float uTime;',
-          'attribute vec2 aAnimation;',
-          'attribute vec3 aStartPosition;',
-          'attribute vec3 aControl0;',
-          'attribute vec3 aControl1;',
-          'attribute vec3 aEndPosition;',
-        ],
-        shaderVertexInit: [
-          'float tDelay = aAnimation.x;',
-          'float tDuration = aAnimation.y;',
-          'float tTime = clamp(uTime - tDelay, 0.0, tDuration);',
-          'float tProgress = ease(tTime, 0.0, 1.0, tDuration);',
-        ],
-        shaderTransformPosition: [
-          animationPhase === 'in' ? 'transformed *= tProgress;' : 'transformed *= 1.0 - tProgress;',
-          'transformed += cubicBezier(aStartPosition, aControl0, aControl1, aEndPosition, tProgress);',
-        ],
-      },
-      {
-        map: new THREE.Texture(),
-      },
-    )
-
-    const aAnimation = geometry.createAttribute('aAnimation', 2)
-    const aStartPosition = geometry.createAttribute('aStartPosition', 3)
-    const aControl0 = geometry.createAttribute('aControl0', 3)
-    const aControl1 = geometry.createAttribute('aControl1', 3)
-    const aEndPosition = geometry.createAttribute('aEndPosition', 3)
-
-    let i: number, i2: number, i3: number, i4: number, v: number
-
-    const minDuration = 0.8
-    const maxDuration = 1.2
-    const maxDelayX = 0.9
-    const maxDelayY = 0.125
-    const stretch = 0.11
-
-    const startPosition = new THREE.Vector3()
-    const control0 = new THREE.Vector3()
-    const control1 = new THREE.Vector3()
-    const endPosition = new THREE.Vector3()
-
-    const tempPoint = new THREE.Vector3()
-
-    const getControlPoint0 = (centroid: THREE.Vector3): THREE.Vector3 => {
-      const signY = Math.sign(centroid.y)
-      tempPoint.x = THREE.MathUtils.randFloat(0.1, 0.3) * 50
-      tempPoint.y = signY * THREE.MathUtils.randFloat(0.1, 0.3) * 70
-      tempPoint.z = THREE.MathUtils.randFloatSpread(20)
-      return tempPoint
-    }
-
-    const getControlPoint1 = (centroid: THREE.Vector3): THREE.Vector3 => {
-      const signY = Math.sign(centroid.y)
-      tempPoint.x = THREE.MathUtils.randFloat(0.3, 0.6) * 50
-      tempPoint.y = -signY * THREE.MathUtils.randFloat(0.3, 0.6) * 70
-      tempPoint.z = THREE.MathUtils.randFloatSpread(20)
-      return tempPoint
-    }
-
-    console.log(2222)
-    console.log(geometry)
-
-    // for (i = 0, i2 = 0, i3 = 0, i4 = 0; i < geometry.getAttribute('position').count / 3; i++, i2 += 6, i3 += 9, i4 += 12) {
-    for (i = 0, i2 = 0, i3 = 0, i4 = 0; i < 2; i++, i2 += 6, i3 += 9, i4 += 12) {
-      // const face = plane.faces[i]
-      const centroid = BAS.Utils.computeCentroid(plane, i)
-      // Animation
-      const duration = THREE.MathUtils.randFloat(minDuration, maxDuration)
-      const delayX = THREE.MathUtils.mapLinear(
-        centroid.x,
-        -width * 0.5,
-        width * 0.5,
-        0.0,
-        maxDelayX,
-      )
-      let delayY: number
-      if (animationPhase === 'in') {
-        delayY = THREE.MathUtils.mapLinear(Math.abs(centroid.y), 0, height * 0.5, 0.0, maxDelayY)
-      } else {
-        delayY = THREE.MathUtils.mapLinear(Math.abs(centroid.y), 0, height * 0.5, maxDelayY, 0.0)
+const utils = {
+  // 源对象src中的所有属性复制到目标对象dst
+  extend: function <T extends Record<string, any>, U extends Record<string, any>>(
+    dst: T,
+    src: U,
+  ): T & U {
+    for (const key in src) {
+      // 安全地检查 src 对象是否拥有指定的属性
+      if (Object.prototype.hasOwnProperty.call(src, key)) {
+        dst[key as keyof T] = src[key] as unknown as T[keyof T]
       }
-      const aAnimationArray = aAnimation.array as Float32Array
-      for (v = 0; v < 6; v += 2) {
-        aAnimationArray[i2 + v] = delayX + delayY + Math.random() * stretch * duration
-        aAnimationArray[i2 + v + 1] = duration
-      }
-      // Positions
-      endPosition.copy(centroid)
-      startPosition.copy(centroid)
-      if (animationPhase === 'in') {
-        control0.copy(centroid).sub(getControlPoint0(centroid))
-        control1.copy(centroid).sub(getControlPoint1(centroid))
-      } else {
-        // out
-        control0.copy(centroid).add(getControlPoint0(centroid))
-        control1.copy(centroid).add(getControlPoint1(centroid))
-      }
-      const aStartPositionArray = aStartPosition.array as Float32Array
-      const aControl0Array = aControl0.array as Float32Array
-      const aControl1Array = aControl1.array as Float32Array
-      const aEndPositionArray = aEndPosition.array as Float32Array
-      for (v = 0; v < 9; v += 3) {
-        aStartPositionArray[i3 + v] = startPosition.x
-        aStartPositionArray[i3 + v + 1] = startPosition.y
-        aStartPositionArray[i3 + v + 2] = startPosition.z
-        aControl0Array[i3 + v] = control0.x
-        aControl0Array[i3 + v + 1] = control0.y
-        aControl0Array[i3 + v + 2] = control0.z
-        aControl1Array[i3 + v] = control1.x
-        aControl1Array[i3 + v + 1] = control1.y
-        aControl1Array[i3 + v + 2] = control1.z
-        aEndPositionArray[i3 + v] = endPosition.x
-        aEndPositionArray[i3 + v + 1] = endPosition.y
-        aEndPositionArray[i3 + v + 2] = endPosition.z
-      }
-
-      console.log(3333)
-      console.log(centroid)
-      console.log(aStartPositionArray)
     }
-    super(geometry, material)
-    this.totalDuration = maxDuration + maxDelayX + maxDelayY + stretch
-    this.frustumCulled = false
-  }
-
-  // get time(): number {
-  //   return (this.material as THREE.ShaderMaterial).uniforms['uTime'].value
-  // }
-
-  // set time(v: number) {
-  //   (this.material as THREE.ShaderMaterial).uniforms['uTime'].value = v
-  // }
-
-  setImage(image: HTMLImageElement): void {
-    ;(this.material as THREE.ShaderMaterial).uniforms.map.value.image = image
-    ;(this.material as THREE.ShaderMaterial).uniforms.map.value.needsUpdate = true
-  }
-
-  transition() {
-    return gsap
-      .fromTo(
-        this,
-        { time: 0.0 },
-        {
-          time: this.totalDuration,
-          ease: Power0.easeInOut,
-        },
-      )
-      .duration(3.0)
-  }
-}
-
-class SlideGeometry extends ModelBufferGeometry {
-  modelGeometry: THREE.BufferGeometry
-  faceCount: number
-  vertexCount: number
-  faceIndexArray: Uint32Array
-
-  constructor(model: THREE.BufferGeometry) {
-    super(model)
-
-    this.modelGeometry = model
-    this.faceCount = this.modelGeometry.index ? this.modelGeometry.index.count / 3 : 0
-    this.vertexCount = this.modelGeometry.attributes.position.count
-    this.faceIndexArray = this.modelGeometry?.index.array as Uint32Array
-
-    // this.bufferPositions()
-
-    console.log(1111)
-    console.log(this.modelGeometry)
-    console.log(this.faceCount)
-    console.log(this.vertexCount)
-    console.log(this.faceIndexArray)
-  }
-
-  // 填充顶点位置数据, 计算重心
-  bufferPositions(): void {
-    // 使用类型断言，假定 'position' 属性的数组是 Float32Array 类型
-    const positionBuffer = this.createAttribute('position', 3).array as Float32Array
-
-    // 获取位置属性
-    const positionAttribute = this.modelGeometry.attributes.position as THREE.BufferAttribute
-
-    // 遍历每个面，计算每个顶点相对于重心的位置
-    for (let i = 0; i < this.faceCount; i++) {
-      const idx = i * 3 // 每个面有3个顶点
-      const a = idx // 顶点A索引
-      const b = idx + 1 // 顶点B索引
-      const c = idx + 2 // 顶点C索引
-
-      // 获取每个顶点的位置
-      const vertexA = new THREE.Vector3(
-        positionAttribute.getX(a),
-        positionAttribute.getY(a),
-        positionAttribute.getZ(a),
-      )
-      const vertexB = new THREE.Vector3(
-        positionAttribute.getX(b),
-        positionAttribute.getY(b),
-        positionAttribute.getZ(b),
-      )
-      const vertexC = new THREE.Vector3(
-        positionAttribute.getX(c),
-        positionAttribute.getY(c),
-        positionAttribute.getZ(c),
-      )
-
-      const centroid = new THREE.Vector3()
-      // 将 x, y, z 对应向量相加
-      centroid.add(vertexA).add(vertexB).add(vertexC)
-      centroid.x = centroid.x / 3
-      centroid.y = centroid.y / 3
-      centroid.z = centroid.z / 3
-
-      // 将顶点相对于重心进行偏移
-      positionBuffer[a * 3] = vertexA.x - centroid.x
-      positionBuffer[a * 3 + 1] = vertexA.y - centroid.y
-      positionBuffer[a * 3 + 2] = vertexA.z - centroid.z
-
-      positionBuffer[b * 3] = vertexB.x - centroid.x
-      positionBuffer[b * 3 + 1] = vertexB.y - centroid.y
-      positionBuffer[b * 3 + 2] = vertexB.z - centroid.z
-
-      positionBuffer[c * 3] = vertexC.x - centroid.x
-      positionBuffer[c * 3 + 1] = vertexC.y - centroid.y
-      positionBuffer[c * 3 + 2] = vertexC.z - centroid.z
-    }
-  }
+    return dst as T & U
+  },
 }
 
 interface THREERootParams {
@@ -331,7 +39,7 @@ class THREERoot {
   constructor(params: THREERootParams) {
     params = utils.extend(
       {
-        fov: 60,
+        fov: 80,
         zNear: 10,
         zFar: 100000,
         createCameraControls: true,
@@ -346,9 +54,9 @@ class THREERoot {
       alpha: true,
     })
 
-    this.renderer.setPixelRatio(Math.min(2, params.deviceInfo.devicePixelRatio || 1))
+    this.renderer.setClearColor(0x000000, 0)
 
-    // .appendChild(this.renderer.domElement);
+    this.renderer.setPixelRatio(Math.min(2, params.deviceInfo.devicePixelRatio || 1))
 
     this.camera = new THREE.PerspectiveCamera(
       params.fov,
@@ -356,7 +64,7 @@ class THREERoot {
       params.zNear,
       params.zFar,
     )
-
+    this.camera.position.set(0, 0, 60)
     this.scene = new THREE.Scene()
 
     // 默认 false
@@ -369,13 +77,13 @@ class THREERoot {
 
     this.resize()
     this.tick()
-    // window.addEventListener('resize', this.resize, false)
+    // window.addEventListener('resize', this.resize)
   }
 
   tick(): void {
     this.update()
     this.render()
-    THREE.$requestAnimationFrame(this.tick)
+    $requestAnimationFrame(this.tick)
   }
 
   update(): void {
@@ -393,155 +101,334 @@ class THREERoot {
   }
 }
 
-////////////////////
-// UTILS
-////////////////////
-
-// 定义一个类型用于表示三维向量
-// 定义一个类型用于表示三维向量
-interface Vector3 {
-  x: number
-  y: number
-  z: number
+const createAttribute = (geometry: THREE.BufferGeometry, name: string, itemSize: number) => {
+  const buffer = new Float32Array(geometry.attributes.position.count * itemSize)
+  const attribute = new THREE.BufferAttribute(buffer, itemSize)
+  geometry.setAttribute(name, attribute)
+  return attribute
 }
 
-const utils = {
-  // 源对象src中的所有属性复制到目标对象dst
-  extend: function <T extends Record<string, any>, U extends Record<string, any>>(
-    dst: T,
-    src: U,
-  ): T & U {
-    for (const key in src) {
-      // 安全地检查 src 对象是否拥有指定的属性
-      if (Object.prototype.hasOwnProperty.call(src, key)) {
-        dst[key as keyof T] = src[key] as unknown as T[keyof T]
-      }
-    }
-    return dst as T & U
-  },
+const handle = (bufferGeometry: THREE.BufferGeometry) => {
+  // 用于存储重新组织后的顶点位置数据
+  const newVerticesArray = []
+  // 用于存储重新组织后的uv坐标数据
+  const newUvArray = []
+  // 用于存储重新组织后的法线数据
+  const newNormalsArray = []
 
-  // 返回一个随机的符号，1或-1
-  randSign: function (): number {
-    return Math.random() > 0.5 ? 1 : -1
-  },
+  const indexAttribute = bufferGeometry.index
+  const indexArray = indexAttribute.array
+  const prePositions = bufferGeometry.getAttribute('position').array
+  const preUvs = bufferGeometry.getAttribute('uv').array
+  const preNormals = bufferGeometry.getAttribute('normal').array
 
-  // 动画缓动函数
-  /**
-   * 使用给定的缓动函数ease来计算当前时间t下的位置
-   * @param ease 缓动函数
-   * @param t 当前时间
-   * @param b 初始位置
-   * @param c 变化量
-   * @param d 总时间
-   * @returns 计算后的当前位置
-   */
-  ease: function (
-    ease: { getRatio: (t: number) => number },
-    t: number,
-    b: number,
-    c: number,
-    d: number,
-  ): number {
-    return b + ease.getRatio(t / d) * c
-  },
+  let currentIndex = 0
+  while (currentIndex < indexAttribute.count) {
+    // 每个面由三个索引构成
+    const index1 = indexArray[currentIndex]
+    const index2 = indexArray[currentIndex + 1]
+    const index3 = indexArray[currentIndex + 2]
 
-  // 返回一个函数，该函数根据斐波那契球面分割算法生成一个三维空间中的点
-  fibSpherePoint: (function () {
-    const vec: Vector3 = { x: 0, y: 0, z: 0 }
-    const G = Math.PI * (3 - Math.sqrt(5))
+    // 提取原始位置数据（每个顶点的 x, y, z）
+    const vertex1 = [
+      prePositions[index1 * 3],
+      prePositions[index1 * 3 + 1],
+      prePositions[index1 * 3 + 2],
+    ]
+    const vertex2 = [
+      prePositions[index2 * 3],
+      prePositions[index2 * 3 + 1],
+      prePositions[index2 * 3 + 2],
+    ]
+    const vertex3 = [
+      prePositions[index3 * 3],
+      prePositions[index3 * 3 + 1],
+      prePositions[index3 * 3 + 2],
+    ]
 
-    return function (i: number, n: number, radius: number = 1): Vector3 {
-      const step = 2.0 / n
+    // 提取原始法线数据
+    const normal1 = [preNormals[index1 * 3], preNormals[index1 * 3 + 1], preNormals[index1 * 3 + 2]]
+    const normal2 = [preNormals[index2 * 3], preNormals[index2 * 3 + 1], preNormals[index2 * 3 + 2]]
+    const normal3 = [preNormals[index3 * 3], preNormals[index3 * 3 + 1], preNormals[index3 * 3 + 2]]
 
-      vec.y = i * step - 1 + step * 0.5
-      const r = Math.sqrt(1 - vec.y * vec.y)
-      const phi = i * G
-      vec.x = Math.cos(phi) * r
-      vec.z = Math.sin(phi) * r
+    // 提取原始 UV 数据
+    const uv1 = [preUvs[index1 * 2], preUvs[index1 * 2 + 1]]
+    const uv2 = [preUvs[index2 * 2], preUvs[index2 * 2 + 1]]
+    const uv3 = [preUvs[index3 * 2], preUvs[index3 * 2 + 1]]
 
-      vec.x *= radius
-      vec.y *= radius
-      vec.z *= radius
+    // 将每个顶点的位置、法线和 UV 数据添加到新数组中
+    newVerticesArray.push(...vertex1, ...vertex2, ...vertex3)
+    newNormalsArray.push(...normal1, ...normal2, ...normal3)
+    newUvArray.push(...uv1, ...uv2, ...uv3)
+    // 继续处理下一个面
+    currentIndex += 3
+  }
 
-      return vec
-    }
-  })(),
+  bufferGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(new Float32Array(newVerticesArray), 3),
+  )
+  bufferGeometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(newUvArray), 2))
+  bufferGeometry.setAttribute(
+    'normal',
+    new THREE.BufferAttribute(new Float32Array(newNormalsArray), 3),
+  )
 
-  // 返回一个函数，该函数生成一个单位球面上的随机点
-  spherePoint: (function () {
-    return function (u: number = Math.random(), v: number = Math.random()): Vector3 {
-      const theta = 2 * Math.PI * u
-      const phi = Math.acos(2 * v - 1)
+  // 更新索引数组
+  const indexAttrArray = Array.from({ length: 144000 }, (item, index) => index)
 
-      const vec: Vector3 = {
-        x: Math.sin(phi) * Math.cos(theta),
-        y: Math.sin(phi) * Math.sin(theta),
-        z: Math.cos(phi),
-      }
-
-      return vec
-    }
-  })(),
+  // 将索引数组转换为 BufferAttribute, 一定是
+  bufferGeometry.index = new THREE.BufferAttribute(new Uint32Array(indexAttrArray), 1)
 }
 
-const createTweenScrubber = (tween: gsap.core.Timeline, seekSpeed: number = 0.001) => {
-  function stop(): void {
-    gsap.to(tween, 1, { timeScale: 0 })
+const bufferPositions = (bufferGeometry: THREE.BufferGeometry) => {
+  const positions = bufferGeometry.getAttribute('position').array
+  const indices = bufferGeometry.index?.array || []
+
+  const tempArr = []
+  for (let i = 0; i < bufferGeometry.index.count / 3; i++) {
+    // for (let i = 0; i < 3; i++) {
+    const centroid: THREE.Vector3 = computeCentroid(indices, positions, i * 3)
+    // 第 i 个面 3 个顶点
+    const x1 = positions[i * 3 * 3]
+    const y1 = positions[i * 3 * 3 + 1]
+    const z1 = positions[i * 3 * 3 + 2]
+
+    const x2 = positions[(i * 3 + 1) * 3]
+    const y2 = positions[(i * 3 + 1) * 3 + 1]
+    const z2 = positions[(i * 3 + 1) * 3 + 2]
+
+    const x3 = positions[(i * 3 + 2) * 3]
+    const y3 = positions[(i * 3 + 2) * 3 + 1]
+    const z3 = positions[(i * 3 + 2) * 3 + 2]
+
+    tempArr[i * 3 * 3] = x1 - centroid.x
+    tempArr[i * 3 * 3 + 1] = y1 - centroid.y
+    tempArr[i * 3 * 3 + 2] = z1 - centroid.z
+
+    tempArr[(i * 3 + 1) * 3] = x2 - centroid.x
+    tempArr[(i * 3 + 1) * 3 + 1] = y2 - centroid.y
+    tempArr[(i * 3 + 1) * 3 + 2] = z2 - centroid.z
+
+    tempArr[(i * 3 + 2) * 3] = x3 - centroid.x
+    tempArr[(i * 3 + 2) * 3 + 1] = y3 - centroid.y
+    tempArr[(i * 3 + 2) * 3 + 2] = z3 - centroid.z
+  }
+  bufferGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(tempArr), 3))
+}
+
+class Slide extends THREE.Mesh {
+  totalDuration: number
+  image: any
+
+  constructor(width: number, height: number, animationPhase: 'in' | 'out') {
+    const geometry = new THREE.PlaneGeometry(width, height, width * 2, height * 2)
+
+    // separateFaces(geometry)
+
+    handle(geometry)
+
+    /**
+     * 自定义的顶点属性。通过 createAttribute 方法创建属性并绑定到几何体上。每个属性的第二个参数是每个顶点需要存储的数据量（例如，3 表示三维向量）
+     */
+    // 存储动画相关的数据（延迟时间和持续时间）
+    const aAnimation = createAttribute(geometry, 'aAnimation', 2)
+    // 动画开始位置
+    const aStartPosition = createAttribute(geometry, 'aStartPosition', 3)
+    // 贝塞尔曲线的控制点
+    const aControl0 = createAttribute(geometry, 'aControl0', 3)
+    // 贝塞尔曲线的控制点
+    const aControl1 = createAttribute(geometry, 'aControl1', 3)
+    // 动画结束位置
+    const aEndPosition = createAttribute(geometry, 'aEndPosition', 3)
+
+    // 动画的最短持续时间
+    const minDuration = 0.8
+    // 动画的最长持续时间
+    const maxDuration = 1.2
+    // 计算动画的延迟时间
+    const maxDelayX = 0.9
+    // 计算动画的延迟时间
+    const maxDelayY = 0.125
+    // 调整延迟和持续时间的变化范围，影响动画的随机性
+    const stretch = 0.11
+
+    /**
+     * 这四个 THREE.Vector3 对象分别用于存储每个面的位置以及贝塞尔曲线的控制点
+     */
+    const startPosition = new THREE.Vector3()
+    const control0 = new THREE.Vector3()
+    const control1 = new THREE.Vector3()
+    const endPosition = new THREE.Vector3()
+    // 临时的 Vector3 对象，计算控制点时存储结果
+    const tempPoint = new THREE.Vector3()
+
+    // 根据每个面的质心（centroid）计算并返回控制点生成贝塞尔曲线
+    const getControlPoint0 = (centroid: THREE.Vector3): THREE.Vector3 => {
+      // 共有 5 种返回值，分别是 1, -1, 0, -0, NaN. 代表的各是正数，负数，正零，负零，NaN
+      const signY = Math.sign(centroid.y)
+      // 0.1 到 0.3 这个范围取随机数 * 50
+      tempPoint.x = THREE.MathUtils.randFloat(0.1, 0.3) * 50
+      tempPoint.y = signY * THREE.MathUtils.randFloat(0.1, 0.3) * 70
+      // 关于 0 对称的区间内的随机数，范围大小为 20
+      tempPoint.z = THREE.MathUtils.randFloatSpread(20)
+      return tempPoint
+    }
+
+    // 根据每个面的质心（centroid）计算并返回控制点生成贝塞尔曲线
+    const getControlPoint1 = (centroid: THREE.Vector3): THREE.Vector3 => {
+      const signY = Math.sign(centroid.y)
+      tempPoint.x = THREE.MathUtils.randFloat(0.3, 0.6) * 50
+      tempPoint.y = -signY * THREE.MathUtils.randFloat(0.3, 0.6) * 70
+      tempPoint.z = THREE.MathUtils.randFloatSpread(20)
+      return tempPoint
+    }
+
+    for (let i = 0, i2 = 0, i3 = 0; i < geometry.index.count / 3; i++, i2 += 6, i3 += 9) {
+      const positionAttribute = geometry.getAttribute('position')
+      const positions = positionAttribute.array
+      const indices = geometry.index?.array || []
+
+      const centroid: THREE.Vector3 = computeCentroid(indices, positions, i * 3)
+
+      // Animation
+      // 根据质心的 X 和 Y 坐标计算动画的延迟时间
+      const duration = THREE.MathUtils.randFloat(minDuration, maxDuration)
+      const delayX = THREE.MathUtils.mapLinear(
+        centroid.x,
+        -width * 0.5,
+        width * 0.5,
+        0.0,
+        maxDelayX,
+      )
+      let delayY: number
+      if (animationPhase === 'in') {
+        delayY = THREE.MathUtils.mapLinear(Math.abs(centroid.y), 0, height * 1.5, 0.0, maxDelayY)
+      } else {
+        delayY = THREE.MathUtils.mapLinear(Math.abs(centroid.y), 0, height * 0.5, maxDelayY, 0.0)
+      }
+      const aAnimationArray = aAnimation.array as Float32Array
+      for (let v = 0; v < 6; v += 2) {
+        aAnimationArray[i2 + v] = delayX + delayY + Math.random() * stretch * duration
+        aAnimationArray[i2 + v + 1] = duration
+      }
+      // Positions
+      // 初始化为面的质心
+      endPosition.copy(centroid)
+      startPosition.copy(centroid)
+      if (animationPhase === 'in') {
+        control0.copy(centroid).sub(getControlPoint0(centroid))
+        control1.copy(centroid).sub(getControlPoint1(centroid))
+      } else {
+        // out
+        control0.copy(centroid).add(getControlPoint0(centroid))
+        control1.copy(centroid).add(getControlPoint1(centroid))
+      }
+      const aStartPositionArray = aStartPosition.array as Float32Array
+      const aControl0Array = aControl0.array as Float32Array
+      const aControl1Array = aControl1.array as Float32Array
+      const aEndPositionArray = aEndPosition.array as Float32Array
+      for (let v = 0; v < 9; v += 3) {
+        aStartPositionArray[i3 + v] = startPosition.x
+        aStartPositionArray[i3 + v + 1] = startPosition.y
+        aStartPositionArray[i3 + v + 2] = startPosition.z
+        aControl0Array[i3 + v] = control0.x
+        aControl0Array[i3 + v + 1] = control0.y
+        aControl0Array[i3 + v + 2] = control0.z
+        aControl1Array[i3 + v] = control1.x
+        aControl1Array[i3 + v + 1] = control1.y
+        aControl1Array[i3 + v + 2] = control1.z
+        aEndPositionArray[i3 + v] = endPosition.x
+        aEndPositionArray[i3 + v + 1] = endPosition.y
+        aEndPositionArray[i3 + v + 2] = endPosition.z
+      }
+    }
+
+    const basicShader = THREE.ShaderLib['basic']
+    const tempUniforms = THREE.UniformsUtils.merge([basicShader.uniforms, { uTime: { value: 0 } }])
+
+    tempUniforms.map.value = new THREE.Texture()
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader: _concatVertexShader(animationPhase),
+      // 加了
+      fragmentShader: fragmentShader,
+      lights: false,
+      uniforms: tempUniforms,
+      defines: {
+        USE_MAP: '',
+        USE_UV: '',
+      },
+      side: THREE.DoubleSide,
+    })
+
+    bufferPositions(geometry)
+
+    super(geometry, material)
+    this.frustumCulled = false
+    // 每个面动画的总持续时间
+    this.totalDuration = maxDuration + maxDelayX + maxDelayY + stretch
   }
 
-  function resume(): void {
-    gsap.to(tween, 1, { timeScale: 1 })
+  setImage(image: HTMLImageElement | HTMLCanvasElement | THREE.Texture): void {
+    ;(this.material as THREE.ShaderMaterial).uniforms.map.value.image = image
+    ;(this.material as THREE.ShaderMaterial).uniforms.map.value.needsUpdate = true
   }
 
-  function seek(dx: number): void {
-    const progress = tween.progress()
-    const p = THREE.MathUtils.clamp(progress + dx * seekSpeed, 0, 1)
-
-    tween.progress(p)
+  get time(): number {
+    return (this.material as THREE.ShaderMaterial).uniforms['uTime'].value
   }
 
-  // let _cx = 0
+  // 设置时间属性
+  set time(v: number) {
+    ;(this.material as THREE.ShaderMaterial).uniforms['uTime'].value = v
+  }
 
-  // desktop
-  // let mouseDown = false
-  // document.body.style.cursor = 'pointer'
+  transition() {
+    return gsap
+      .fromTo(
+        this,
+        { time: 0.0 },
+        {
+          time: this.totalDuration,
+          ease: Power0.easeInOut,
+        },
+      )
+      .duration(3.0)
+  }
+}
 
-  // window.addEventListener('mousedown', function (e) {
-  //   mouseDown = true
-  //   document.body.style.cursor = 'ew-resize'
-  //   _cx = e.clientX
-  //   stop()
-  // })
-  // window.addEventListener('mouseup', function (e) {
-  //   mouseDown = false
-  //   document.body.style.cursor = 'pointer'
-  //   resume()
-  // })
-  // window.addEventListener('mousemove', function (e) {
-  //   if (mouseDown === true) {
-  //     const cx = e.clientX
-  //     const dx = cx - _cx
-  //     _cx = cx
+export const show = (deviceInfo: Record<string, any>, canvas: HTMLCanvasElement) => {
+  const root = new THREERoot({
+    createCameraControls: !true,
+    antialias: deviceInfo.devicePixelRatio === 1,
+    fov: 80,
+    deviceInfo: deviceInfo,
+  })
 
-  //     seek(dx)
-  //   }
-  // })
-  // // mobile
-  // window.addEventListener('touchstart', function (e) {
-  //   _cx = e.touches[0].clientX
-  //   stop()
-  //   e.preventDefault()
-  // })
-  // window.addEventListener('touchend', function (e) {
-  //   resume()
-  //   e.preventDefault()
-  // })
-  // window.addEventListener('touchmove', function (e) {
-  //   const cx = e.touches[0].clientX
-  //   const dx = cx - _cx
-  //   _cx = cx
 
-  //   seek(dx)
-  //   e.preventDefault()
-  // })
+  const width = 40, height = 90
+
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 1, yoyo: true })
+  const twoPic = (animationPhase: 'in' | 'out', url: string) => {
+    const slide = new Slide(width, height, animationPhase)
+
+    const l = new THREE.ImageLoader()
+    l.load(
+      url,
+      (image) => {
+        console.log("image")
+        console.log(image)
+        slide.setImage(image)
+      },
+      undefined,
+      (e) => {
+        console.error('error: ', e)
+      },
+    )
+    root.scene.add(slide)
+    tl.add(slide.transition(), 0)
+  }
+  twoPic('out', '../../static/images/湘湘.png')
+  twoPic('in', '../../static/images/logo.jpg')
 }
