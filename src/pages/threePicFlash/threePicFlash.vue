@@ -18,7 +18,7 @@ import { onLoad, onReady } from '@dcloudio/uni-app'
 import type { NodesRef } from '@dcloudio/uni-types'
 import { getCurrentInstance, ref, nextTick } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
-import type { WindowInfo } from '@/types/window.d'
+import type { DeviceInfo } from '@/types/device'
 import { show } from './index'
 
 onReady(() => {
@@ -44,7 +44,7 @@ onReady(() => {
     .exec()
 })
 
-const windowInfo = ref<WindowInfo>({
+const windowInfo = ref<DeviceInfo>({
   windowWidth: 0,
   windowHeight: 0,
 })
@@ -82,3 +82,4 @@ const touchEnd = (e) => {
 </script>
 
 <style lang="scss" scoped></style>
+@/types/device

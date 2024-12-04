@@ -49,7 +49,7 @@ const getInfo = () => {
   //   },
   // })
 
-  uni.navigateTo({ url: '/pages/test/test' })
+  uni.navigateTo({ url: '/pages/threePicFlash/threePicFlash' })
 }
 
 const onChooseAvatar = (e: Record<string, any>) => {
