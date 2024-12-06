@@ -1,9 +1,9 @@
 <template>
-  <view style="backgroundcolor: red">
+  <view class="view">
     <image
-      class="image"
+      class="main-image"
       mode="scaleToFill"
-      :src="curImg"
+      :src="imageList[index]"
       @touchstart="touchStart"
       @touchend="touchEnd"
     />
@@ -19,8 +19,9 @@
 
 <script lang="ts" setup>
 import { onLoad, onReady } from '@dcloudio/uni-app'
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import type { Position } from '@/types/device'
+import { gsap } from 'gsap'
 
 const imageList = Object.values(
   import.meta.glob('../../static/images/images/*.*', { eager: true }),
@@ -36,11 +37,10 @@ const leftList = computed(() => {
 })
 
 // 显示的图片
-const curImg = ref<string>(imageList.shift())
-let tempRight = imageList
-const right = ref<string[]>(tempRight )
+const index = ref<number>(0)
+const right = ref<string[]>(imageList.slice(1))
 const rightList = computed(() => {
-  console.log("right.value")
+  console.log('right.value')
   console.log(right.value)
   return right.value.length > 3 ? right.value.slice(0, 3) : right.value
 })
@@ -56,6 +56,8 @@ const touchStart = (e: any) => {
   startPos.value.x = e.changedTouches[0].clientX
 }
 
+const tl = gsap.timeline({ repeat: 1 })
+
 const touchEnd = (e: any) => {
   let endPos = e.changedTouches[0].clientX
 
@@ -66,11 +68,10 @@ const touchEnd = (e: any) => {
     if (left.value.length == 0) {
       return
     } else {
-      curImg.value = left.value.shift()
-      right.value.push(curImg.value)
+      right.value.unshift(imageList[index.value])
+      left.value.pop()
+      index.value--
     }
-    console.log(right.value)
-    console.log(left.value)
   } else if (endPos - startPos.value.x < -50) {
     console.log('左滑')
     moveDirection.value = 'left'
@@ -78,13 +79,14 @@ const touchEnd = (e: any) => {
     if (right.value.length == 0) {
       return
     } else {
-      curImg.value = right.value.shift()
-      left.value.push(curImg.value)
+      left.value.push(imageList[index.value])
+      right.value.shift()
+      index.value++
     }
-
-    console.log(right.value)
-    console.log(left.value)
   }
+  console.log(right.value)
+  console.log(left.value)
+  console.log(index.value)
 }
 </script>
 
@@ -94,50 +96,70 @@ uni-image {
   box-shadow: 0 0 10rpx #000;
 }
 
-.image {
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%);
-  // inset: 40rpx 0rpx;
-  margin-top: 5%;
-
-  height: 90%;
+.view {
+  display: flex;
+  justify-content: center;
+  .main-image {
+    position: absolute;
+    margin-top: 5%;
+    height: 90%;
+  }
 }
 
-.image-list {
-  width: 400rpx;
+@mixin position($pos) {
+  width: 300rpx;
   height: 250rpx;
   display: flex;
-  // overflow: hidden;
-
+  position: absolute;
+  bottom: 5%;
   image {
     width: 200rpx;
     height: 100%;
-    &:nth-child(1) {
-      z-index: 3;
+    position: absolute;
+    transition: 0.5s;
+  }
+
+  @if $pos == 'right' {
+    image {
+      &:nth-child(1) {
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        transition: 0.5s;
+        margin-left: 15%;
+        z-index: 2;
+      }
+      &:nth-child(3) {
+        // transition: 0.5s;
+        margin-left: 30%;
+        z-index: 1;
+      }
     }
-    &:nth-child(2) {
-      margin-left: -35%;
-      z-index: 2;
-    }
-    &:nth-child(3) {
-      margin-left: -30%;
-      z-index: 1;
+  } @else {
+    image {
+      &:nth-last-child(3) {
+        z-index: 1;
+      }
+      &:nth-last-child(2) {
+        z-index: 2;
+
+        margin-left: 15%;
+      }
+      &:nth-last-child(1) {
+        z-index: 3;
+        margin-left: 30%;
+      }
     }
   }
 }
 
 .left-list {
-  @extend .image-list;
-  position: absolute;
-  right: 60%;
-  bottom: 5%;
+  @include position('left');
+  left: 0;
 }
 
 .right-list {
-  @extend .image-list;
-  position: absolute;
-  left: 60%;
-  bottom: 5%;
+  @include position('right');
+  right: 0;
 }
 </style>
