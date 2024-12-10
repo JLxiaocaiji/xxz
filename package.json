@@ -60,6 +60,7 @@
     "@dcloudio/uni-mp-xhs": "3.0.0-alpha-3081220230802001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-alpha-3081220230802001",
     "@dcloudio/uni-ui": "^1.4.23",
+    "flipbook-vue": "^1.0.0-beta.4",
     "gsap": "^3.12.5",
     "path": "^0.12.7",
     "pinia": "^2.0.27",

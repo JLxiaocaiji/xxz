@@ -33,7 +33,6 @@ onReady(() => {
 const index = ref<number>(0)
 
 // 滑动
-const moveDirection = ref<string>('')
 const startPos = ref<Position>({
   x: 0,
   y: 0,
@@ -67,7 +66,6 @@ const touchEnd = (e: any) => {
   let endPos = e.changedTouches[0].clientX
 
   if (endPos - startPos.value.x > 50) {
-    moveDirection.value = 'right'
     console.log('右滑')
 
     if (index.value == 0) {
@@ -77,7 +75,6 @@ const touchEnd = (e: any) => {
     }
   } else if (endPos - startPos.value.x < -50) {
     console.log('左滑')
-    moveDirection.value = 'left'
 
     if (index.value == imageList.length - 1) {
       return
