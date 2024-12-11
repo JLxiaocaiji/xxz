@@ -20,6 +20,7 @@ import { getCurrentInstance, ref, nextTick } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import type { DeviceInfo } from '@/types/device'
 import { show } from './index'
+import { useDeviceConfigStore } from '@/store'
 
 onReady(() => {
   uni
@@ -58,14 +59,16 @@ const init = (canvas: HTMLCanvasElement) => {
 }
 
 // 获取屏幕信息
+const deviceConfigStore = useDeviceConfigStore()
+
 const getWindowInfo = (canvas: HTMLCanvasElement) => {
-  let tempWindowInfo = uni.getSystemInfoSync()
+  let tempWindowInfo = deviceConfigStore.deviceInfo
   console.log(tempWindowInfo)
   windowInfo.value.windowWidth = tempWindowInfo.windowWidth // 402
   windowInfo.value.windowHeight = tempWindowInfo.windowHeight // 728
 
   nextTick(() => {
-    show({ ...tempWindowInfo, canvas: canvas })
+    show({ ...tempWindowInfo }, canvas)
   })
 }
 

@@ -1,6 +1,10 @@
 <script>
+import { useDeviceConfigStore } from '@/store'
+
 export default {
   onLaunch: function () {
+    const deviceConfigStore = useDeviceConfigStore()
+    deviceConfigStore.batchSetDeviceInfo(uni.getSystemInfoSync())
     console.log('App Launch')
   },
   onShow: function () {

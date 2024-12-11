@@ -1,4 +1,5 @@
 <template>
+  <LoadingCom v-if="isLoading" styleName="" />
   <view @touchstart="touchStart" @touchend="touchEnd" @click="click" class="bg">
     <view class="book" :style="{ index: index }">
       <!-- 书 前封面 -->
@@ -29,6 +30,10 @@
 <script lang="ts" setup>
 import { ref, computed, nextTick } from 'vue'
 import type { Position } from '@/types/device'
+import { useStatusStore } from '@/store'
+import { onMounted } from 'vue'
+import LoadingCom from '@/components/LoadingCom/index.vue'
+import { storeToRefs } from 'pinia'
 
 const imageList = [
   '../../static/images/images/2.jpg',
@@ -73,6 +78,12 @@ const touchEnd = (e: any) => {
 }
 
 const click = (e: any) => {}
+
+const { isLoading } = storeToRefs(useStatusStore())
+setTimeout(() => {
+  isLoading.value = false
+}, 1000)
+
 </script>
 
 <style lang="scss" scoped>
@@ -89,10 +100,6 @@ const click = (e: any) => {}
   left: 50%;
   transform: translate(-50%, -50%);
 }
-
-// .cover-#{$name} {
-
-// }
 
 @mixin style {
   width: 180px;
@@ -122,6 +129,7 @@ const click = (e: any) => {}
   position: relative;
   @include style;
   z-index: calc(2 - var(--index));
+    box-shadow: inset 300px 0 50px rgba(0, 0, 0, 0.5);
 
   .front-f {
     @include style-f;
@@ -129,10 +137,12 @@ const click = (e: any) => {}
       color: #fff;
     }
     background: lightblue;
+    box-shadow: inset 20px 0 50px rgba(0, 0, 0, 0.5);
   }
   .front-b {
     @include style-b;
     background: lightgreen;
+    box-shadow: inset 20px 0 50px rgba(0, 0, 0, 0.5);
   }
 }
 
