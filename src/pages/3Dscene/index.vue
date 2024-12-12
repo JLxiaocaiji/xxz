@@ -1,4 +1,5 @@
 <template>
+  <LoadingCom v-if="isLoading" styleName="" />
   <view>
     <canvas
       class="webgl"
@@ -21,6 +22,11 @@ import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import { useDeviceConfigStore } from '@/store'
 import { THREERoot } from './index'
 import type { Position } from '@/types/device'
+import LoadingCom from '@/components/LoadingCom/index.vue'
+import { useStatusStore } from '@/store'
+import { storeToRefs } from 'pinia'
+
+const { isLoading } = storeToRefs(useStatusStore())
 
 onReady(() => {
   uni
@@ -72,9 +78,10 @@ const init = (canvas: HTMLCanvasElement) => {
   const envMapTexture = new THREE.CubeTextureLoader(loadingManager)
     .setPath('../../static/images/envMaps/')
     .load(['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg'])
+  loadingManager.onLoad = () => {
+    isLoading.value = false
+  }
 
-  console.log('envMapTexture')
-  console.log(envMapTexture)
   const material = new THREE.MeshStandardMaterial({
     metalness: 0.7,
     roughness: 0.1,
@@ -135,7 +142,7 @@ const touchMove = (e: TouchEvent) => {
     let deltaX = e.touches[0].pageX - startPos.value.x
     let deltaY = e.touches[0].pageY - startPos.value.y
 
-    if (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50) {
+    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
       // 左右角度变化
       cameraRotation.value.x += deltaX * 0.005
       // 上下角度变化
