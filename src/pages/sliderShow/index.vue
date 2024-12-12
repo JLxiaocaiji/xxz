@@ -57,12 +57,12 @@ const getImageStyle = (idx: number, side: 'left' | 'right') => {
     : 'active-n'
 }
 
-const touchStart = (e: any) => {
+const touchStart = (e: TouchEvent) => {
   console.log(e)
   startPos.value.x = e.changedTouches[0].clientX
 }
 
-const touchEnd = (e: any) => {
+const touchEnd = (e: TouchEvent) => {
   let endPos = e.changedTouches[0].clientX
 
   if (endPos - startPos.value.x > 50) {

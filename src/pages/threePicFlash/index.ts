@@ -2,7 +2,18 @@ import * as THREE from 'three-platformize'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
 import { Power0, gsap } from 'gsap'
 import { _concatVertexShader, computeCentroid, fragmentShader } from './bas'
-import { $cancelAnimationFrame, $requestAnimationFrame, $window, AmbientLight, DirectionalLight, PerspectiveCamera, PLATFORM, Scene, sRGBEncoding, WebGL1Renderer } from 'three-platformize'
+import {
+  $cancelAnimationFrame,
+  $requestAnimationFrame,
+  $window,
+  AmbientLight,
+  DirectionalLight,
+  PerspectiveCamera,
+  PLATFORM,
+  Scene,
+  sRGBEncoding,
+  WebGL1Renderer,
+} from 'three-platformize'
 
 const utils = {
   // 源对象src中的所有属性复制到目标对象dst
@@ -56,7 +67,7 @@ class THREERoot {
 
     this.renderer.setClearColor(0x000000, 0)
 
-    this.renderer.setPixelRatio(Math.min(2, params.deviceInfo.devicePixelRatio || 1))
+    this.renderer.setPixelRatio(Math.min(2, params.deviceInfo.pixelRatio || 1))
 
     this.camera = new THREE.PerspectiveCamera(
       params.fov,
@@ -401,13 +412,13 @@ class Slide extends THREE.Mesh {
 export const show = (deviceInfo: Record<string, any>, canvas: HTMLCanvasElement) => {
   const root = new THREERoot({
     createCameraControls: !true,
-    antialias: deviceInfo.devicePixelRatio === 1,
+    antialias: deviceInfo.pixelRatio === 1,
     fov: 80,
     deviceInfo: deviceInfo,
   })
 
-
-  const width = 40, height = 90
+  const width = 40,
+    height = 90
 
   const tl = gsap.timeline({ repeat: -1, repeatDelay: 1, yoyo: true })
   const twoPic = (animationPhase: 'in' | 'out', url: string) => {
@@ -417,7 +428,7 @@ export const show = (deviceInfo: Record<string, any>, canvas: HTMLCanvasElement)
     l.load(
       url,
       (image) => {
-        console.log("image")
+        console.log('image')
         console.log(image)
         slide.setImage(image)
       },

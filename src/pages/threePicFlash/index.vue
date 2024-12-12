@@ -14,7 +14,7 @@
 
 <script lang="ts" setup>
 import * as THREE from 'three-platformize'
-import { onLoad, onReady } from '@dcloudio/uni-app'
+import { onLoad, onReady, onUnload } from '@dcloudio/uni-app'
 import type { NodesRef } from '@dcloudio/uni-types'
 import { getCurrentInstance, ref, nextTick } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
@@ -72,16 +72,20 @@ const getWindowInfo = (canvas: HTMLCanvasElement) => {
   })
 }
 
-const touchStart = (e) => {
+const touchStart = (e: TouchEvent) => {
   // console.log(e)
 }
-const touchMove = (e) => {
+const touchMove = (e: TouchEvent) => {
   // console.log(e)
   // this.platform.dispatchTouchEvent(e);
 }
-const touchEnd = (e) => {
+const touchEnd = (e: TouchEvent) => {
   // console.log(e)
 }
+
+onUnload(() => {
+  THREE.PLATFORM.dispose();
+})
 </script>
 
 <style lang="scss" scoped></style>

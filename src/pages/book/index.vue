@@ -31,7 +31,6 @@
 import { ref, computed, nextTick } from 'vue'
 import type { Position } from '@/types/device'
 import { useStatusStore } from '@/store'
-import { onMounted } from 'vue'
 import LoadingCom from '@/components/LoadingCom/index.vue'
 import { storeToRefs } from 'pinia'
 
@@ -49,12 +48,12 @@ const startPos = ref<Position>({
 // 显示的图片
 const index = ref<number>(0)
 
-const touchStart = (e: any) => {
+const touchStart = (e: TouchEvent) => {
   console.log(e)
   startPos.value.x = e.changedTouches[0].clientX
 }
 
-const touchEnd = (e: any) => {
+const touchEnd = (e: TouchEvent) => {
   let endPos = e.changedTouches[0].clientX
 
   if (endPos - startPos.value.x > 50) {
