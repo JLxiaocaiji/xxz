@@ -1,17 +1,13 @@
 <template>
   <view class="loader">
     <view class="spinner">
-      <image
-        :src="imgUrl || '../../static/images/images/10.gif'"
-        mode="scaleToFill"
-        :style="imgStyle"
-      />
+      <image :src="imgUrl || '../../static/images/10.gif'" mode="scaleToFill" :style="imgStyle" />
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, defineProps } from 'vue'
 
 const props = defineProps<{
   imgUrl?: string

@@ -36,6 +36,8 @@ export class THREERoot {
   deviceInfo: Record<string, any>
   disposing: Boolean
   frameId: any
+  time?: number
+  spriteMaterial?: THREE.SpriteMaterial
 
   constructor(inComingParam: THREERootParams) {
     const params = utils.extend(
@@ -68,9 +70,9 @@ export class THREERoot {
     this.camera.position.set(params.cameraPos.x, params.cameraPos.y, params.cameraPos.z)
     this.scene = new THREE.Scene()
 
-    // 默认 false 与 相机发生冲突
+    // 默认 false, this.controls?.update() 与 相机发生冲突
     this.controls = new OrbitControls(this.camera, params.canvas)
-    this.controls.enableDamping = true // 启用阻尼，平滑过渡
+    // this.controls.enableDamping = true // 启用阻尼，平滑过渡
     this.controls.dampingFactor = 0.25 // 设置阻尼因子
     this.controls.minPolarAngle = Math.PI / 2
     this.controls.maxPolarAngle = Math.PI / 2
@@ -86,13 +88,21 @@ export class THREERoot {
   tick(): void {
     this.update()
     this.render()
+
+
+    if (this.time && this.spriteMaterial) {
+          console.log("this.time")
+      this.time += 0.05
+      this.spriteMaterial.opacity = Math.abs(Math.sin(this.time)) * 0.5 + 0.5
+    }
+
     if (!this.disposing) {
       this.frameId = $requestAnimationFrame(this.tick)
     }
   }
 
   update(): void {
-    // this.c?.update()
+    // this.controls?.update()
   }
 
   render(): void {
@@ -112,5 +122,24 @@ export class THREERoot {
 
   getInstance() {
     return this
+  }
+
+  // sprite
+  createSprite(spriteImg: string, time: number): void {
+    const spriteTexture = new THREE.TextureLoader().load(spriteImg)
+    this.spriteMaterial = new THREE.SpriteMaterial({
+      map: spriteTexture,
+      transparent: true,
+      opacity: 1.0, // 初始透明度
+      alphaTest: 0.5, // 可选，确保透明区域不渲染
+    })
+    const sprite = new THREE.Sprite(this.spriteMaterial)
+    sprite.scale.set(16, 16, 1)
+    sprite.position.set(20, 20, 0)
+
+    this.time = time
+    console.log('time')
+    console.log(time)
+    this.scene.add(sprite)
   }
 }
