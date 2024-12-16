@@ -17,7 +17,7 @@
 import * as THREE from 'three-platformize'
 import { onLoad, onReady, onUnload } from '@dcloudio/uni-app'
 import type { NodesRef } from '@dcloudio/uni-types'
-import { getCurrentInstance, ref, nextTick } from 'vue'
+import { getCurrentInstance, ref, nextTick, unref } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import { useDeviceConfigStore } from '@/store'
 import { THREERoot } from './index'
@@ -59,6 +59,9 @@ const deviceConfigStore = useDeviceConfigStore()
 const deviceInfo = deviceConfigStore.deviceInfo
 
 var platform: WechatPlatform
+var shiningSprite: THREE.Sprite
+var isShining = false
+var hasStoppedShining = false
 
 const initThree = (canvas: HTMLCanvasElement) => {
   platform = new WechatPlatform(canvas) // webgl canvasNode
@@ -135,13 +138,13 @@ const initThree = (canvas: HTMLCanvasElement) => {
 
     const spriteAnimate = (isShining: boolean) => {
       if (isShining) {
-        t += 0.005
+        t += 0.05
         spriteMaterial.opacity = Math.abs(Math.sin(t)) * 0.5 + 0.5
       } else {
         spriteMaterial.opacity = 1
       }
     }
-    shiningSprite.value = sprite
+    shiningSprite = sprite
     return spriteAnimate
   }
   return { scene, camera, renderer, controls, createSprite }
@@ -150,8 +153,10 @@ const initThree = (canvas: HTMLCanvasElement) => {
 const disposing = ref<boolean>(false)
 var frameId: any
 var Camera: THREE.PerspectiveCamera
-
-const shiningSprite = ref(null)
+// 监听鼠标点击事件
+var raycaster = new THREE.Raycaster()
+var pointer = new THREE.Vector2()
+const clock = new THREE.Clock()
 
 const init = (canvas: HTMLCanvasElement) => {
   const { scene, camera, renderer, controls, createSprite } = initThree(canvas)
@@ -160,30 +165,31 @@ const init = (canvas: HTMLCanvasElement) => {
 
   console.log(spriteAnimate)
   console.log(scene)
+  console.log(shiningSprite)
+
   const render = () => {
-    // controls?.update()
+    const delta = clock.getDelta() // 获取上一帧与当前帧的时间间隔
+    const time = clock.elapsedTime
 
-    console.log(11)
     raycaster.setFromCamera(pointer, Camera)
-    console.log(22)
-    console.log(pointer)
-    console.log(shiningSprite.value)
-    const intersects = raycaster.intersectObject(shiningSprite.value)
+    const intersects = raycaster.intersectObject(shiningSprite)
 
-    console.log('intersects')
-    console.log(intersects)
-
-    if (intersects.length > 0) {
-      // 点击精灵时停止闪烁
-      isShining.value = false
+    // 如果没有点击精灵且尚未停止闪烁，则恢复闪烁状态
+    if (intersects.length === 0 && !hasStoppedShining) {
+      isShining = true
+    } else if (intersects.length > 0 && !hasStoppedShining) {
+      // 点击到精灵时停止闪烁，并标记为已停止
+      isShining = false
+      hasStoppedShining = true // 设置为已停止状态，防止之后恢复闪烁
     }
 
-    spriteAnimate(isShining.value)
+    console.log(intersects.length)
+    console.log(isShining)
+    spriteAnimate(isShining)
 
     if (!disposing.value) {
       frameId = $requestAnimationFrame(render)
     }
-
     renderer.render(scene, camera)
   }
 
@@ -211,11 +217,6 @@ const getDistance = (touch1: Touch, touch2: Touch) => {
   const dy = touch2.pageY - touch1.pageY
   return Math.sqrt(dx * dx + dy * dy)
 }
-
-const isShining = ref<boolean>(true)
-// 监听鼠标点击事件
-const raycaster = new THREE.Raycaster()
-const pointer = new THREE.Vector2()
 
 // 附带 点击sprite 检测
 const touchStart = (e: TouchEvent) => {

@@ -82,7 +82,6 @@ const { isLoading } = storeToRefs(useStatusStore())
 setTimeout(() => {
   isLoading.value = false
 }, 1000)
-
 </script>
 
 <style lang="scss" scoped>
@@ -128,7 +127,7 @@ setTimeout(() => {
   position: relative;
   @include style;
   z-index: calc(2 - var(--index));
-    box-shadow: inset 300px 0 50px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 300px 0 50px rgba(0, 0, 0, 0.5);
 
   .front-f {
     @include style-f;
