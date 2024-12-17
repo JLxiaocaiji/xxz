@@ -19,7 +19,7 @@ import { onLoad, onReady, onUnload } from '@dcloudio/uni-app'
 import type { NodesRef } from '@dcloudio/uni-types'
 import { getCurrentInstance, ref, nextTick, unref } from 'vue'
 import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
-import { useDeviceConfigStore } from '@/store'
+import { useBaseConfigStore } from '@/store'
 import { THREERoot } from './index'
 import type { Position } from '@/types/device'
 import LoadingCom from '@/components/LoadingCom/index.vue'
@@ -27,6 +27,7 @@ import { useStatusStore } from '@/store'
 import { storeToRefs } from 'pinia'
 import { OrbitControls } from 'three-platformize/examples/jsm/controls/OrbitControls'
 import { $cancelAnimationFrame, $requestAnimationFrame } from 'three-platformize'
+import { getCodeImg } from '@/api/index.ts'
 
 const { isLoading } = storeToRefs(useStatusStore())
 
@@ -55,8 +56,8 @@ onReady(() => {
 })
 
 // 获取屏幕信息
-const deviceConfigStore = useDeviceConfigStore()
-const deviceInfo = deviceConfigStore.deviceInfo
+const baseConfigStore = useBaseConfigStore()
+const deviceInfo = baseConfigStore.deviceInfo
 
 var platform: WechatPlatform
 var shiningSprite: THREE.Sprite
@@ -167,33 +168,38 @@ const init = (canvas: HTMLCanvasElement) => {
   console.log(scene)
   console.log(shiningSprite)
 
-  const render = () => {
-    const delta = clock.getDelta() // 获取上一帧与当前帧的时间间隔
-    const time = clock.elapsedTime
+          getCodeImg().then((res: any) => {
+          console.log('1111')
+          console.log(res)
+        })
 
-    raycaster.setFromCamera(pointer, Camera)
-    const intersects = raycaster.intersectObject(shiningSprite)
+  // const render = () => {
+  //   const delta = clock.getDelta() // 获取上一帧与当前帧的时间间隔
+  //   const time = clock.elapsedTime
 
-    // 如果没有点击精灵且尚未停止闪烁，则恢复闪烁状态
-    if (intersects.length === 0 && !hasStoppedShining) {
-      isShining = true
-    } else if (intersects.length > 0 && !hasStoppedShining) {
-      // 点击到精灵时停止闪烁，并标记为已停止
-      isShining = false
-      hasStoppedShining = true // 设置为已停止状态，防止之后恢复闪烁
-    }
+  //   raycaster.setFromCamera(pointer, Camera)
+  //   const intersects = raycaster.intersectObject(shiningSprite)
 
-    console.log(intersects.length)
-    console.log(isShining)
-    spriteAnimate(isShining)
+  //   // 如果没有点击精灵且尚未停止闪烁，则恢复闪烁状态
+  //   if (intersects.length === 0 && !hasStoppedShining) {
+  //     isShining = true
+  //   } else if (intersects.length > 0 && !hasStoppedShining) {
+  //     // 点击到精灵时停止闪烁，并标记为已停止
+  //     isShining = false
+  //     hasStoppedShining = true // 设置为已停止状态，防止之后恢复闪烁
+  //   }
 
-    if (!disposing.value) {
-      frameId = $requestAnimationFrame(render)
-    }
-    renderer.render(scene, camera)
-  }
+  //   // console.log(intersects.length)
+  //   // console.log(isShining)
+  //   spriteAnimate(isShining)
 
-  render()
+  //   if (!disposing.value) {
+  //     frameId = $requestAnimationFrame(render)
+  //   }
+  //   renderer.render(scene, camera)
+  // }
+
+  // render()
 }
 
 const startPos = ref<Position>({

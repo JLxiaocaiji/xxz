@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { DeviceInfo } from '@/types/device'
 
-export const useDeviceConfigStore = defineStore(
-  'deviceConfig',
+export const useBaseConfigStore = defineStore(
+  'baseInfo',
   () => {
     const deviceInfo = ref<DeviceInfo>({
       pixelRatio: 0,
@@ -27,10 +27,19 @@ export const useDeviceConfigStore = defineStore(
       })
     }
 
+    const token = ref<string | null>(null)
+
+    const setToken = (val: string) => {
+      token.value = val
+    }
+
     return {
       deviceInfo,
       setDeviceInfo,
       batchSetDeviceInfo,
+
+      token,
+      setToken,
     }
   },
   {
