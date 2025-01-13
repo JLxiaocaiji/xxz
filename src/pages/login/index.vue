@@ -6,10 +6,16 @@
     <view class="login">
       <!-- 小程序端授权登录 -->
       <!-- #ifdef MP-WEIXIN -->
-      <button class="button phone" open-type="getPhoneNumber" @click="getUserInfo">
+      <!-- <button class="button phone" open-type="getPhoneNumber" @click="getUserInfo">
         <text class="icon icon-phone"></text>
         只是获取您的昵称
+      </button> -->
+
+      <button class="button phone" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+        <!-- <image class="avatar" src="@/static/images/logo.jpg"></image> -->
       </button>
+      <input type="nickname" class="weui-input" placeholder="请输入昵称" />
+
       <!-- #endif -->
       <view class="extra">
         <view class="caption">
@@ -30,15 +36,15 @@
 <script lang="ts" setup>
 import type { UniEvent } from '@dcloudio/uni-types'
 
-const getUserInfo = (e: UniEvent) => {
+const onChooseAvatar = (e: any) => {
   console.log(e)
 
-  uni.getUserProfile({
+  wx.getUserProfile({
     desc: 'Wexin',
     success: (res: Record<string, any>) => {
       console.log(res)
 
-      uni.login({
+      wx.login({
         provider: 'weixin',
         success(wres) {
           console.log('微信')

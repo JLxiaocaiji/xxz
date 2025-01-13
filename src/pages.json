@@ -13,45 +13,55 @@
 	},
 	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
     {
+			"path": "pages/main/index",
+			"style": {
+				"backgroundTextStyle": "light",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationBarTitleText": "hi·你好",
+        "navigationBarTextStyle": "black",
+        "backgroundColor": "#fff"
+			}
+		},
+    {
 			"path": "pages/login/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "hi·你好",
 			}
 		},
     {
 			"path": "pages/3Dscene/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "hi·你好",
 			}
 		},
     {
 			"path": "pages/book/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "hi·你好",
 			}
 		},
     {
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "hi·你好",
 			}
 		},
 		{
 			"path": "pages/threePicFlash/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "hi·你好",
 			}
 		},
         {
       "path": "pages/sliderShow/index",
       "style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "hi·你好",
 			}
     }
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-app",
+		"navigationBarTitleText": "hi·你好",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8"
 	},
