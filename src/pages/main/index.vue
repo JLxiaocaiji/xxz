@@ -16,7 +16,7 @@ import { ref } from "vue"
 
 const couple = ref<string[]>()
 const app = getApp() as any
-couple.value = app.globalData.couple.map((item) => {
+couple.value = app.globalData.couple.map((item: string) => {
   return item
 })
 

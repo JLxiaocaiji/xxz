@@ -40,7 +40,7 @@ interface THREERootParams {
   deviceInfo: Record<string, any>
 }
 
-class THREERoot {
+export class THREERoot {
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
@@ -228,7 +228,7 @@ const bufferPositions = (bufferGeometry: THREE.BufferGeometry) => {
   bufferGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(tempArr), 3))
 }
 
-class Slide extends THREE.Mesh {
+export class Slide extends THREE.Mesh {
   totalDuration: number
   image: any
 
@@ -438,8 +438,8 @@ export const show = (deviceInfo: Record<string, any>, canvas: HTMLCanvasElement)
       },
     )
     root.scene.add(slide)
-    tl.add(slide.transition(), 0)
+    // tl.add(slide.transition(), 0)
   }
-  twoPic('out', '../../static/images/湘湘.png')
-  twoPic('in', '../../static/images/logo.jpg')
+  twoPic('in', '../../static/images/湘湘.png')
+  twoPic('out', '../../static/images/logo.jpg')
 }

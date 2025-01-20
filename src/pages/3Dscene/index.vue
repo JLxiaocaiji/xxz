@@ -230,7 +230,7 @@ const touchStart = (e: TouchEvent) => {
   if (e.touches.length == 1) {
     isTouching.value = true
     startPos.value.x = e.touches[0].pageX
-    startPos.value.y = e.touches[0].pageX
+    startPos.value.y = e.touches[0].pageY
   } else if (e.touches.length === 2) {
     isScaling.value = true
     const touch1 = e.touches[0]

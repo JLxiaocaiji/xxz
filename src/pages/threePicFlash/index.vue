@@ -4,8 +4,8 @@
       class="webgl"
       type="webgl"
       id="gl"
-      @touchstart="touchStart"
       style="width: 100vw; height: 100vh"
+      @touchstart="touchStart"
       @touchmove="touchMove"
       @touchend="touchEnd"
     ></canvas>
@@ -21,6 +21,8 @@ import { WechatPlatform } from 'three-platformize/src/WechatPlatform'
 import type { DeviceInfo } from '@/types/device'
 import { show } from './index'
 import { useBaseConfigStore } from '@/store'
+import type { Position } from '@/types/device'
+import { THREERoot, Slide } from './index'
 
 onReady(() => {
   uni
@@ -61,30 +63,82 @@ const init = (canvas: HTMLCanvasElement) => {
 // 获取屏幕信息
 const baseConfigStore = useBaseConfigStore()
 
+// 加载 image
+const setImage = (url: string, slide: Slide) => {
+    const l = new THREE.ImageLoader()
+  l.load(
+    url,
+    (image) => {
+      console.log('image')
+      console.log(image)
+      slide.setImage(image)
+    },
+    undefined,
+    (e: Error) => {
+      console.error('error: ', e)
+    },
+  )
+  return slide
+}
+
+var slide1 = null
+var slide2 = null
+
 const getWindowInfo = (canvas: HTMLCanvasElement) => {
   let tempWindowInfo = baseConfigStore.deviceInfo
   console.log(tempWindowInfo)
   windowInfo.value.windowWidth = tempWindowInfo.windowWidth // 402
   windowInfo.value.windowHeight = tempWindowInfo.windowHeight // 728
 
-  nextTick(() => {
-    show({ ...tempWindowInfo }, canvas)
+  // nextTick(() => {
+  //   show({ ...tempWindowInfo }, canvas)
+  // })
+
+  const root = new THREERoot({
+    createCameraControls: !true,
+    antialias: tempWindowInfo.pixelRatio === 1,
+    fov: 80,
+    deviceInfo: tempWindowInfo,
   })
+
+  const width = 40,
+    height = 90
+
+  slide1 = setImage( '../../static/images/湘湘.png', new Slide(width, height, "in"))
+  slide2 = setImage( '../../static/images/logo.jpg', new Slide(width, height, "out"))
 }
 
+// 单指角度变化
+const isTouching = ref<boolean>(false)
+const startPos = ref<Position>({
+  x: 0,
+  y: 0,
+})
+
 const touchStart = (e: TouchEvent) => {
-  // console.log(e)
+  console.log(e)
+  if (e.touches.length == 1) {
+    isTouching.value = true
+    console.log(e.touches[0])
+    console.log(e.touches[0].pageX)
+    startPos.value.x = e.touches[0].pageX
+    startPos.value.y = e.touches[0].pageY
+  } else if (e.touches.length === 2) {
+    const touch1 = e.touches[0]
+    const touch2 = e.touches[1]
+  }
 }
 const touchMove = (e: TouchEvent) => {
-  // console.log(e)
-  // this.platform.dispatchTouchEvent(e);
 }
 const touchEnd = (e: TouchEvent) => {
-  // console.log(e)
+  isTouching.value = false
+  let a = e.changedTouches[0].pageX - startPos.value.x > 0 ? 'right' : 'left'
+  console.log(a)
+  a == 'right' ? slide1.transition() : slide2.transition()
 }
 
 onUnload(() => {
-  THREE.PLATFORM.dispose();
+  THREE.PLATFORM.dispose()
 })
 </script>
 
