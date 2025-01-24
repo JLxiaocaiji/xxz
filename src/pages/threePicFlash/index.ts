@@ -119,6 +119,7 @@ const createAttribute = (geometry: THREE.BufferGeometry, name: string, itemSize:
   return attribute
 }
 
+// 转化为非索引模式
 const handle = (bufferGeometry: THREE.BufferGeometry) => {
   // 用于存储重新组织后的顶点位置数据
   const newVerticesArray = []
@@ -274,9 +275,9 @@ export class Slide extends THREE.Mesh {
     // 临时的 Vector3 对象，计算控制点时存储结果
     const tempPoint = new THREE.Vector3()
 
-    // 根据每个面的质心（centroid）计算并返回控制点生成贝塞尔曲线
+    // 根据每个面的质心（centroid）计算并返回控制点生成贝塞尔曲线，初始弯曲
     const getControlPoint0 = (centroid: THREE.Vector3): THREE.Vector3 => {
-      // 共有 5 种返回值，分别是 1, -1, 0, -0, NaN. 代表的各是正数，负数，正零，负零，NaN
+      // Math.sign 共有 5 种返回值，分别是 1, -1, 0, -0, NaN. 代表的各是正数，负数，正零，负零，NaN
       const signY = Math.sign(centroid.y)
       // 0.1 到 0.3 这个范围取随机数 * 50
       tempPoint.x = THREE.MathUtils.randFloat(0.1, 0.3) * 50
@@ -286,7 +287,7 @@ export class Slide extends THREE.Mesh {
       return tempPoint
     }
 
-    // 根据每个面的质心（centroid）计算并返回控制点生成贝塞尔曲线
+    // 根据每个面的质心（centroid）计算并返回控制点生成贝塞尔曲线，最终弯曲
     const getControlPoint1 = (centroid: THREE.Vector3): THREE.Vector3 => {
       const signY = Math.sign(centroid.y)
       tempPoint.x = THREE.MathUtils.randFloat(0.3, 0.6) * 50
@@ -295,6 +296,9 @@ export class Slide extends THREE.Mesh {
       return tempPoint
     }
 
+    // i：表示当前处理的三角形索引;
+    // i2：用于访问 aAnimation 数组中当前三角形的起始位置（每个顶点有 2 个动画属性：延迟和时长，3 个顶点共 6 个值）
+    // i3：用于访问位置相关属性（aStartPosition、aControl0 等）的起始位置（每个顶点有 3 个位置坐标，3 个顶点共 9 个值）
     for (let i = 0, i2 = 0, i3 = 0; i < geometry.index.count / 3; i++, i2 += 6, i3 += 9) {
       const positionAttribute = geometry.getAttribute('position')
       const positions = positionAttribute.array
@@ -303,8 +307,9 @@ export class Slide extends THREE.Mesh {
       const centroid: THREE.Vector3 = computeCentroid(indices, positions, i * 3)
 
       // Animation
-      // 根据质心的 X 和 Y 坐标计算动画的延迟时间
+      // 根据质心的 X 和 Y 坐标计算动画的延迟时间（0.8到 1.2之间的随机数）
       const duration = THREE.MathUtils.randFloat(minDuration, maxDuration)
+      // x：要映射的输入值; a1 和 a2：输入值 x 的原始范围的下限和上限; b1 和 b2：输出值的期望范围的下限和上限
       const delayX = THREE.MathUtils.mapLinear(
         centroid.x,
         -width * 0.5,
@@ -319,6 +324,7 @@ export class Slide extends THREE.Mesh {
         delayY = THREE.MathUtils.mapLinear(Math.abs(centroid.y), 0, height * 0.5, maxDelayY, 0.0)
       }
       const aAnimationArray = aAnimation.array as Float32Array
+      // 每个顶点的延迟时间和持续时间被存储，格式为 [delay, duration]
       for (let v = 0; v < 6; v += 2) {
         aAnimationArray[i2 + v] = delayX + delayY + Math.random() * stretch * duration
         aAnimationArray[i2 + v + 1] = duration
@@ -420,6 +426,7 @@ export const show = (deviceInfo: Record<string, any>, canvas: HTMLCanvasElement)
   const width = 40,
     height = 90
 
+  // 无限重复，重复之前会延迟1秒，来回反复
   const tl = gsap.timeline({ repeat: -1, repeatDelay: 1, yoyo: true })
   const twoPic = (animationPhase: 'in' | 'out', url: string) => {
     const slide = new Slide(width, height, animationPhase)
@@ -440,6 +447,6 @@ export const show = (deviceInfo: Record<string, any>, canvas: HTMLCanvasElement)
     root.scene.add(slide)
     // tl.add(slide.transition(), 0)
   }
-  twoPic('in', '../../static/images/湘湘.png')
+  twoPic('in', '../../static/images/logo1.jpg')
   twoPic('out', '../../static/images/logo.jpg')
 }
