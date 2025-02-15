@@ -27,19 +27,20 @@ onMounted(() => {
 
   loadImg()
 
-  const query: UniApp.SelectorQuery = uni.createSelectorQuery();
-  // 在 HTML 文档里选取所有带有 grid 类名的元素，并把这些元素以 NodeList 对象的形式存储到 grids 常量中
-  // const grids: NodeListOf<Element> = document.querySelectorAll('.grid')
-  const grids = query.selectAll('.grid')
-  console.log(grids)
-  query.selectAll('.grid').node((itemRes) => {
-    if (itemRes && itemRes.nodes) {
-      itemRes.nodes.forEach((itemNode, index) => {
-        let innerQuery = uni.createSelectorQuery().in(itemNode);
-        console.log(innerQuery)
-      })
-    }
-  })
+  const query = uni.createSelectorQuery().in(null)
+
+  // 选择 .grid 元素内的 .grid-item 元素
+  query
+    .selectAll('.grid')
+    .boundingClientRect((rects) => {
+      if (rects) {
+        console.log('获取到的 .grid-item 元素信息：', rects)
+        // 这里可以对获取到的元素信息进行进一步处理
+      } else {
+        console.log('未找到 .grid-item 元素')
+      }
+    })
+    .exec()
   // Array.from(grids).map((grid, i) => chooseAnimation(`grid--${i + 1}`, grid))
 })
 
