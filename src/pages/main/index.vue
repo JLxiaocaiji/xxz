@@ -11,9 +11,8 @@
 
     <view>
       <uni-calendar
-        class="uni-calendar--hook"
         :selected="calendar.selected"
-        :selected-bg-color="'#FF5722'"
+        color="#f56c6c"
       />
     </view>
   </view>
@@ -30,12 +29,20 @@ couple.value = app.globalData.couple.map((item: string) => {
 
 // 日历
 const calendar = ref({
-  lunar: true,  // 显示农历
-  range: true,  // 范围选择
-  insert: false,  // 插入模式 / 弹窗模式
-  selected: [], // 打点
+  lunar: true, // 显示农历
+  range: true, // 范围选择
+  insert: false, // 插入模式 / 弹窗模式
+  selected: [
+    {
+      date: '2025-2-18',
+      info: '签到',
+      data: {
+        custom: '自定义信息',
+        name: '自定义消息头',
+      },
+    },
+  ], // 打点
 })
-
 </script>
 
 <style lang="scss" scoped>
@@ -52,8 +59,8 @@ const calendar = ref({
 }
 
 // 日历
-.uni-calendar__day--selected {
-    background-color: #FF5722;
-    color: #FFFFFF;
+::v-deep(.uni-calendar-checked .uni-calendar-item__weeks-box-item) {
+  background-color: #ff5722;
+  color: #ffffff;
 }
 </style>
