@@ -47,15 +47,14 @@
     </view> -->
 
     <!-- 日历 -->
-    <!-- <view>
+    <view class="calendar">
       <uni-calendar
-        class="calendar"
         :selected="calendar.selected"
         :lunar="true"
         :showMonth="false"
         :date="calendar.date"
       />
-    </view> -->
+    </view>
 
     <!-- 地图 -->
     <view class="location mb100">
@@ -71,7 +70,7 @@
         :enable-scroll="false"
         markers="{{ location.markers }}"
       />
-      <view class="location-mask" @click="openLocation"></view>
+      <view class="location-mask"></view>
       <!-- 仅用于获取定位信息，获取后会打印到控制台并写入到粘贴板，正式发布时记得注释起来 -->
       <button type="primary" size="mini" @click="chooseLocation">到这里去</button>
       // #endif
@@ -115,7 +114,7 @@ const calendar = ref({
   selected: [
     {
       date: '2025-3-9',
-      info: '签到',
+      info: '就在今天',
       data: {
         custom: '自定义信息',
         name: '自定义消息头',
@@ -129,99 +128,19 @@ const calendar = ref({
 const location = ref({
   name: '名称',
   address: '地址',
-  longitude: '120.7241439819336',
-  latitude: '28.03387641906739',
+  longitude: 120.7241439819336,
+  latitude: 28.03387641906739,
 })
-
-const openLocation = () => {
-  console.log(111)
-  // uni.getLocation({
-  //   type: 'wgs84', // 默认使用WGS84坐标系
-  //   success: (res) => {
-  //     console.log('当前位置：', res.latitude, res.longitude)
-  //   },
-  //   fail: (err) => {
-  //     console.error('定位失败:', err)
-  //   },
-  // })
-}
 
 const chooseLocation = () => {
   console.log(222)
-  // let url = `iosamap://navigate?sourceApplication=uniapp&lat=${this.latitude}&lon=${this.longitude}&dev=0`;
-  // let url = `androidamap://route?sourceApplication=appname&slat=${originLat}&slon=${originLng}&sname=我的位置&dlat=${destinationLat}&dlon=${destinationLng}&dname=目的地&dev=0&t=0`;
 
-  uni.getLocation({
-    type: 'wgs84',
-    success: (res) => {
-      // 出发点
-      let latitude = res.latitude
-      let longitude = res.longitude
-      console.log(res)
-
-      uni.showActionSheet({
-        itemList: ['A', 'B', 'C'],
-        success: function (res) {
-          const systemInfo = uni.getSystemInfoSync()
-          const isAndroid = systemInfo.platform === 'android'
-          const isIos = systemInfo.platform === 'ios'
-
-          let url: any
-          // 高德
-          if (isAndroid) {
-            url = `androidamap://route?sourceApplication=uniapp&dlat=${latitude}&dlon=${longitude}&dname=目的地&dev=0&t=0`
-            url = `androidamap://route?sourceApplication=uniapp&dlat=${latitude}&dlon=${longitude}&dname=目的地&dev=0&t=0`
-            // url = `androidamap://route?sourceApplication=uniapp&slat=${location.value.latitude}&slon=${location.value.longitude}&sname=我的位置&dlat=${latitude}&dlon=${longitude}&dname=目的地&dev=0&t=0`
-          } else if (isIos) {
-            // url = `iosamap://path?sourceApplication=uniapp&slat=${location.value.latitude}&slon=${location.value.longitude}&sname=我的位置&dlat=${latitude}&dlon=${longitude}&dname=目的地&dev=0&t=0`
-            url = `iosamap://path?sourceApplication=uniapp&dlat=${latitude}&dlon=${longitude}&dname=目的地&dev=0&t=0`
-          }
-
-          console.log('选中了第' + (res.tapIndex + 1) + '个按钮')
-
-          uni.getProvider({
-            service: 'oauth',
-            success: (res) => {
-              console.log(res)
-              console.log(url)
-              // if (res.provider.includes('amap')) {
-
-              uni.navigateTo({
-                url,
-                success: () => {
-                  console.log('成功跳转高德地图导航')
-                },
-                fail: (err) => {
-                  console.error('跳转高德地图导航失败', err)
-                  uni.showToast({
-                    title: '跳转高德地图导航失败',
-                    icon: 'none',
-                  })
-                },
-              })
-
-
-              // } else {
-              //   uni.showToast({
-              //     title: '未安装高德地图应用',
-              //     icon: 'none',
-              //   })
-              // }
-            },
-          })
-        },
-        fail: function (res) {
-          console.log(res.errMsg)
-        },
-      })
-    },
-    fail: (err) => {
-      console.error('获取位置失败', err)
-      uni.showToast({
-        title: '获取位置失败',
-        icon: 'none',
-      })
-    },
+  uni.openLocation({
+    latitude: location.value.latitude, // 纬度
+    longitude: location.value.longitude, // 经度
+    name: location.value.name, // 地点名称（可选）
+    address: location.value.address, // 地址（可选）
+    scale: 18, // 地图缩放级别（默认18）
   })
 }
 </script>
@@ -361,6 +280,11 @@ const chooseLocation = () => {
   }
 }
 
+.calendar {
+  // padding: 20rpx;
+}
+
+// 地图
 .location {
   border-radius: 20rpx;
   box-shadow: rgb(153, 153, 153) 0 0 10rpx;
@@ -370,6 +294,8 @@ const chooseLocation = () => {
   line-height: 1.5;
   font-size: 24rpx;
   position: relative;
+  display: grid;
+  place-items: center;
 
   & > view {
     padding: 10rpx;
@@ -380,6 +306,10 @@ const chooseLocation = () => {
     height: 260rpx;
     top: 122rpx;
     left: -10rpx;
+  }
+  button {
+    margin-top: 10rpx;
+    background-color: #0077ffba;
   }
 }
 </style>
