@@ -2,7 +2,8 @@ import { useBaseConfigStore } from '@/store'
 
 const baseConfigStore = useBaseConfigStore()
 
-const baseUrl = 'http://localhost:8080'
+// const baseUrl = 'https://localhost:8080'
+const baseUrl = 'https://qm88520fv40.vicp.fun'
 
 type getParams = {
   params: Record<string, any>
@@ -67,8 +68,8 @@ export const http = <T>(options: UniApp.RequestOptions) => {
       method: options.method === undefined ? 'POST' : options.method,
 
       success: (res: Record<string, any>) => {
-        if (res.data.code === 200) {
-          resolve(res.data)
+        if (res.statusCode === 200) {
+          resolve(res)
         } else {
           uni.showToast({
             icon: 'none',

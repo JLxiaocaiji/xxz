@@ -1,15 +1,15 @@
 <template>
   <view>
-    <!-- <view class="title">
+    <view class="title">
       <view>好久不见，婚礼见丨{{ couple[0].name }}"&"{{ couple[1].name }}</view>
       <view>我们结婚啦~</view>
     </view>
     <view class="desc">
       <text class="author">{{ app.globalData.publisher }}</text>
       <text class="date">{{ app.globalData.weddingTimeStr }}</text>
-    </view> -->
+    </view>
 
-    <!-- <view class="cover-wrap">
+    <view class="cover-wrap">
       <image
         class="img-cover-word"
         src="https://h5cdn.hunbei.com/editorCustomPic/2023-5-5-XpF8Q3dtRTsbfzTY8WwBwFWpDhiGPe5k?imageMogr2/auto-orient/thumbnail/747x693>"
@@ -24,10 +24,10 @@
         <image class="img-cover" src="../../static/images/logo.jpg" mode="aspectFit" />
       </view>
       <view class="lh15">斯人若如虹，遇上方知有</view>
-    </view> -->
+    </view>
 
     <!-- 音乐 -->
-    <!-- <view class="music">
+    <view class="music">
       <view :class="['music-controls', music.isPaused ? 'paused' : '']" @click="toggleMusic">
         <image src="../../static/images/icon/music.png" mode="aspectFit" />
       </view>
@@ -41,10 +41,10 @@
           src="https://h5cdn.hunbei.com/editorCustomPic/2022-5-25-dcdPDnJmTyZs5FbjdeWdXShEEYRkN6A4.gif?imageMogr2/auto-orient/thumbnail/48x34>"
           mode="aspectFit"
         />
-        音乐封面
+        <!-- 音乐封面 -->
         <image class="music-poster" :src="imgs.poster" mode="aspectFit" />
       </view>
-    </view> -->
+    </view>
 
     <!-- 日历 -->
     <view class="calendar">
@@ -53,7 +53,7 @@
         :lunar="true"
         :showMonth="false"
         :date="calendar.date"
-      />
+      ></uni-calendar>
     </view>
 
     <!-- 地图 -->
@@ -76,12 +76,15 @@
       // #endif
     </view>
 
+    <image v-for="(url, index) in imageList" :key="index" :src="url" mode="aspectFit"></image>
     <!-- uni.makePhoneCall -->
   </view>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getImageList } from './index'
+import uniCalendar from '@dcloudio/uni-ui/lib/uni-calendar/uni-calendar.vue'
 
 const couple = ref<string[]>()
 const app = getApp() as any
@@ -126,10 +129,10 @@ const calendar = ref({
 
 // 地图
 const location = ref({
-  name: '名称',
-  address: '地址',
-  longitude: 120.7241439819336,
-  latitude: 28.03387641906739,
+  name: '邓桥小院',
+  address: '江苏省南通市通州区宋金路024县',
+  longitude: 120.8201,
+  latitude: 32.1689,
 })
 
 const chooseLocation = () => {
@@ -143,6 +146,15 @@ const chooseLocation = () => {
     scale: 18, // 地图缩放级别（默认18）
   })
 }
+
+const imageList = ref<string[]>()
+onMounted(async () => {
+  let res = await getImageList()
+  console.log(res)
+  imageList.value = (await getImageList()).data
+  console.log(imageList.value)
+  console.log(imageList.value[0])
+})
 </script>
 
 <style lang="scss" scoped>
