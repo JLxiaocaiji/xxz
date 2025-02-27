@@ -1,18 +1,19 @@
 <template>
   <view>
-    <view class="title">
-      <view>好久不见，婚礼见丨{{ couple[0].name }}"&"{{ couple[1].name }}</view>
+    <!-- <view class="title">
+      <view>好久不见，婚礼见丨{{ baseInfo.baseInfo.couple0 }}"&"{{ baseInfo.baseInfo.couple1 }}</view>
       <view>我们结婚啦~</view>
     </view>
     <view class="desc">
-      <text class="author">{{ app.globalData.publisher }}</text>
-      <text class="date">{{ app.globalData.weddingTimeStr }}</text>
-    </view>
+      <text class="author">{{ baseInfo.baseInfo.publisher }}</text>
+      <text class="date">{{ baseInfo.baseInfo.weddingTimeStr }}</text>
+    </view> -->
 
     <view class="cover-wrap">
+      <!-- 这是我一生... -->
       <image
         class="img-cover-word"
-        src="https://h5cdn.hunbei.com/editorCustomPic/2023-5-5-XpF8Q3dtRTsbfzTY8WwBwFWpDhiGPe5k?imageMogr2/auto-orient/thumbnail/747x693>"
+        src="https://h5cdn.hunbei.com/editorCustomPic/2023-12-14-esxGx8bG5XNpztZMmiGWEBkTANN55ykc?imageMogr2/auto-orient/thumbnail/1156x620%3E/format/webp"
         mode="aspectFit"
       />
       <view class="cover">
@@ -49,26 +50,25 @@
     <!-- 日历 -->
     <view class="calendar">
       <uni-calendar
-        :selected="calendar.selected"
+        :selected="baseInfo.selected"
         :lunar="true"
         :showMonth="false"
-        :date="calendar.date"
+        :date="baseInfo.selected[0].date"
       ></uni-calendar>
     </view>
 
     <!-- 地图 -->
     <view class="location mb100">
       <view>
-        <view>{{ location.name }}</view>
-        <view>{{ location.address }}</view>
+        <view>{{ baseInfo.location.name }}</view>
+        <view>{{ baseInfo.location.address }}</view>
       </view>
       // #ifdef MP-WEIXIN
       <map
-        :longitude="location.longitude"
-        :latitude="location.latitude"
+        :longitude="baseInfo.location.longitude"
+        :latitude="baseInfo.location.latitude"
         :enable-zoom="false"
         :enable-scroll="false"
-        markers="{{ location.markers }}"
       />
       <view class="location-mask"></view>
       <!-- 仅用于获取定位信息，获取后会打印到控制台并写入到粘贴板，正式发布时记得注释起来 -->
@@ -82,9 +82,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue'
-import { getImageList } from './index'
-import uniCalendar from '@dcloudio/uni-ui/lib/uni-calendar/uni-calendar.vue'
+import { ref, reactive, onMounted, beforeMount } from 'vue'
+import { getBaseInfo, getImage } from './index'
 
 const couple = ref<string[]>()
 const app = getApp() as any
@@ -109,51 +108,40 @@ const toggleMusic = () => {
   music.value.isPaused = !music.value.isPaused
 }
 
-// 日历
-const calendar = ref({
-  lunar: true, // 显示农历
-  range: true, // 范围选择
-  insert: false, // 插入模式 / 弹窗模式
-  selected: [
-    {
-      date: '2025-3-9',
-      info: '就在今天',
-      data: {
-        custom: '自定义信息',
-        name: '自定义消息头',
-      },
-    },
-  ], // 打点
-  date: '2025-3-9',
-})
-
 // 地图
-const location = ref({
-  name: '邓桥小院',
-  address: '江苏省南通市通州区宋金路024县',
-  longitude: 120.8201,
-  latitude: 32.1689,
-})
-
 const chooseLocation = () => {
   console.log(222)
-
   uni.openLocation({
-    latitude: location.value.latitude, // 纬度
-    longitude: location.value.longitude, // 经度
-    name: location.value.name, // 地点名称（可选）
-    address: location.value.address, // 地址（可选）
+    latitude: baseInfo.value.location.latitude, // 纬度
+    longitude: baseInfo.value.location.longitude, // 经度
+    name: baseInfo.value.location.name, // 地点名称（可选）
+    address: baseInfo.value.location.address, // 地址（可选）
     scale: 18, // 地图缩放级别（默认18）
   })
 }
 
-const imageList = ref<string[]>()
-onMounted(async () => {
-  let res = await getImageList()
+// baseInfo
+const baseInfo = ref<Record<string, string | number>>()
+const getInfo = async () => {
+  let res: any = await getBaseInfo()
   console.log(res)
-  imageList.value = (await getImageList()).data
+  baseInfo.value = res.data.data
+  console.log(baseInfo.value)
+}
+
+// 图片
+const imageList = ref<string[]>()
+
+const getImageList = async () => {
+  let res: any = await getImage()
+  console.log(res)
+  imageList.value = res.data
   console.log(imageList.value)
-  console.log(imageList.value[0])
+}
+
+onMounted(() => {
+  // getImageList()
+  getInfo()
 })
 </script>
 

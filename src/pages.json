@@ -11,7 +11,7 @@
 			"^Xtx(.*)": "@/components/Xtx$1.vue"
 		}
 	},
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+	"pages": [
     {
 			"path": "pages/main/index",
 			"style": {
@@ -23,13 +23,19 @@
 			}
 		},
     {
-			"path": "pages/picFlash/index",
+      "path": "pages/sliderShow/index",
+      "style": {
+				"navigationBarTitleText": "hi·你好"
+			}
+    },
+    {
+			"path": "pages/threePicFlash/index",
 			"style": {
 				"navigationBarTitleText": "hi·你好"
 			}
 		},
     {
-			"path": "pages/threePicFlash/index",
+			"path": "pages/picFlash/index",
 			"style": {
 				"navigationBarTitleText": "hi·你好"
 			}
@@ -57,14 +63,7 @@
 			"style": {
 				"navigationBarTitleText": "hi·你好"
 			}
-		},
-
-        {
-      "path": "pages/sliderShow/index",
-      "style": {
-				"navigationBarTitleText": "hi·你好"
-			}
-    }
+		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

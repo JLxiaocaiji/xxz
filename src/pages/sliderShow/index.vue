@@ -22,7 +22,7 @@ import type { Position } from '@/types/device'
 import { gsap } from 'gsap'
 
 const imageList = Object.values(
-  import.meta.glob('../../static/images/images/*.*', { eager: true }),
+  import.meta.glob('../../static/images/envMaps/*.*', { eager: true }),
 ).map((v: any) => v.default)
 
 onReady(() => {
